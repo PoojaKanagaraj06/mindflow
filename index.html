@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskMate | Turn Thoughts into Action</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <script src="https://kit.fontawesome.com/a54d2cbf95.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --clr-primary: #5d5fef;
+      --clr-secondary: #00c6ff;
+      --clr-bg: #f7f9fc;
+      --clr-dark: #1e1e2f;
+      --clr-light: #ffffff;
+      --radius-lg: 1.5rem;
+      --transition: 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: var(--clr-bg);
+      color: var(--clr-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ---------------- Navbar ---------------- */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      z-index: 1000;
+    }
+
+    .nav-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--clr-primary);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--clr-dark);
+      font-weight: 500;
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -2px;
+      width: 0;
+      height: 2px;
+      background: var(--clr-primary);
+      transition: var(--transition);
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .hamburger span {
+      width: 25px;
+      height: 3px;
+      background: var(--clr-dark);
+      transition: var(--transition);
+      border-radius: 2px;
+    }
+
+    /* Mobile nav */
+    @media (max-width: 768px) {
+      nav ul {
+        position: fixed;
+        top: 70px;
+        right: -100%;
+        flex-direction: column;
+        background: var(--clr-light);
+        width: 200px;
+        padding: 2rem;
+        gap: 1.5rem;
+        box-shadow: -2px 0 12px rgba(0, 0, 0, 0.05);
+        transition: var(--transition);
+      }
+
+      nav ul.active {
+        right: 0;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+    }
+
+    /* ---------------- Sections ---------------- */
+    section {
+      padding: 120px 1.5rem 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    section.reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Hero */
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      align-items: center;
+      gap: 2.5rem;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-secondary) 100%);
+      color: var(--clr-light);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: url("https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80") no-repeat center/cover;
+      opacity: 0.15;
+      transform: rotate(10deg);
+    }
+
+    .hero-content {
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 1.125rem;
+      margin-bottom: 2rem;
+      max-width: 480px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--clr-light);
+      color: var(--clr-primary);
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      transition: var(--transition);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Feature Grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: var(--clr-light);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .feature-card i {
+      font-size: 2rem;
+      color: var(--clr-primary);
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      margin-bottom: 0.75rem;
+      font-size: 1.25rem;
+    }
+
+    .feature-card p {
+      font-size: 0.95rem;
+      color: #50506b;
+    }
+
+    /* Sample To‑Do UI */
+    .todo-sample {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .todo-sample input {
+      flex: 1;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: var(--radius-lg);
+      outline: none;
+    }
+
+    .todo-sample button {
+      background: var(--clr-primary);
+      border: none;
+      color: var(--clr-light);
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .todo-sample button:hover {
+      background: var(--clr-secondary);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 4rem 1.5rem 2rem;
+      color: #727489;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- ================= Navbar ================= -->
+  <header>
+    <div class="nav-wrapper">
+      <div class="logo">TaskMate</div>
+
+      <nav>
+        <ul id="nav-links">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= Hero Section ================= -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <h1>Turn Your Thoughts into Action</h1>
+      <p>Voice or text input converted into tasks, calendar events, and reminders.</p>
+      <a href="#features" class="btn">Start Organizing</a>
+    </div>
+  </section>
+
+  <!-- ================= Features ================= -->
+  <section id="features" class="reveal">
+    <div class="features">
+        
+      <!-- Feature 1: To‑Do List -->
+      <!-- Inside your container 2 -->
+<div class="feature-card">
+  <!-- 📝 HTML -->
+
+  <h2>Smart To‑Do List</h2>
+  <p>Add tasks by typing or speaking, and we’ll keep them organized for you.</p>
+  <div class="todo-input">
+    <input type="text" id="taskInput" placeholder="Enter your task..." />
+    <button id="addTaskBtn">Add</button>
+    <button id="speakBtn">🎤 Speak</button>
+  </div>
+  <ul id="taskList"></ul>
+</div>
+
+<!-- 🧠 JS -->
+<script>
+  const taskInput = document.getElementById("taskInput");
+  const taskList = document.getElementById("taskList");
+
+  document.getElementById("addTaskBtn").addEventListener("click", () => {
+    const value = taskInput.value.trim();
+    if (value) {
+      addTask(value);
+      taskInput.value = "";
+    }
+  });
+
+  document.getElementById("speakBtn").addEventListener("click", () => {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+
+    recognition.onresult = function (event) {
+      const spokenText = event.results[0][0].transcript;
+      taskInput.value = spokenText; // Show text in input box
+      addTask(spokenText);          // Also add to list automatically
+    };
+
+    recognition.onerror = function (e) {
+      alert("Voice error: " + e.error);
+    };
+
+    recognition.start();
+  });
+
+  function addTask(taskText) {
+    const li = document.createElement("li");
+    li.textContent = taskText;
+    taskList.appendChild(li);
+  }
+</script>
+
+
+
+      <!-- Feature 2: Calendar Integration -->
+      <!-- Inside your container 3 -->
+<div class="feature-card">
+  <h2>Mark Your Calendar</h2>
+  <p>Automatically schedule tasks and events on your calendar.</p>
+  <form id="calendarForm">
+    <input type="text" id="eventName" placeholder="Event Name" required />
+    <input type="datetime-local" id="eventTime" required />
+    <button type="submit">Add to Calendar</button>
+  </form>
+  <ul id="calendarList"></ul>
+</div>
+
+<script>
+  const calendarForm = document.getElementById("calendarForm");
+  const calendarList = document.getElementById("calendarList");
+
+  calendarForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const name = document.getElementById("eventName").value;
+    const time = document.getElementById("eventTime").value;
+    if (name && time) {
+      const li = document.createElement("li");
+      li.textContent = `${name} @ ${new Date(time).toLocaleString()}`;
+      calendarList.appendChild(li);
+      calendarForm.reset();
+    }
+  });
+</script>
+
+
+      <!-- Feature 3: Notifications -->
+      <div class="feature-card">
+        <i class="fas fa-bell"></i>
+        <h3>Never Miss a Thing</h3>
+        <p>Get timely notifications and reminders for every task and event.</p>
+        <img src="https://images.unsplash.com/photo-1557682250-34b23b6dfee8?auto=format&fit=crop&w=400&q=80" alt="Notification preview" style="width:100%; border-radius: var(--radius-lg); margin-top:1.5rem;" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Footer ================= -->
+  <footer>
+    © <span id="year"></span> TaskMate. All rights reserved.
+  </footer>
+
+  <script>
+    // Current year in footer
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Hamburger menu toggle
+    const hamburger = document.getElementById("hamburger");
+    const navLinks = document.getElementById("nav-links");
+
+    hamburger.addEventListener("click", () => {
+      navLinks.classList.toggle("active");
+      hamburger.classList.toggle("open");
+    });
+
+    // Reveal on scroll
+    const revealElements = document.querySelectorAll("section");
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    revealElements.forEach((el) => observer.observe(el));
+  </script>
+</body>
+</html>
