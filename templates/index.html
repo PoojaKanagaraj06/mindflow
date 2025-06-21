@@ -5,24 +5,43 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TaskMate | Turn Thoughts into Action</title>
+  <meta name="description" content="Experience the future of productivity with AI-powered voice recognition, intelligent task management, and seamless calendar integration." />
+  
+  <!-- Open Graph tags -->
+  <meta property="og:title" content="TaskMate | Turn Thoughts into Action" />
+  <meta property="og:description" content="Experience the future of productivity with AI-powered voice recognition, intelligent task management, and seamless calendar integration." />
+  <meta property="og:type" content="website" />
 
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/a54d2cbf95.js" crossorigin="anonymous"></script>
+  
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
   <style>
     :root {
-      --clr-primary: #5d5fef;
-      --clr-secondary: #00c6ff;
-      --clr-bg: #f7f9fc;
-      --clr-dark: #1e1e2f;
-      --clr-light: #ffffff;
+      --clr-primary: hsl(248, 84%, 63%);
+      --clr-secondary: hsl(195, 100%, 50%);
+      --clr-accent: hsl(262, 83%, 58%);
+      --clr-accent-2: hsl(188, 94%, 43%);
+      --clr-bg: hsl(240, 21%, 6%);
+      --clr-bg-light: hsl(240, 21%, 18%);
+      --clr-dark: hsl(240, 21%, 18%);
+      --clr-light: hsl(0, 0%, 100%);
+      --clr-glass: hsla(0, 0%, 100%, 0.15);
+      --clr-glass-border: hsla(0, 0%, 100%, 0.2);
       --radius-lg: 1.5rem;
-      --transition: 0.3s ease;
+      --radius-xl: 2rem;
+      --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
 
     * {
@@ -34,21 +53,120 @@
 
     body {
       background: var(--clr-bg);
-      color: var(--clr-dark);
+      color: var(--clr-light);
       line-height: 1.6;
       overflow-x: hidden;
+      position: relative;
     }
 
-    /* ---------------- Navbar ---------------- */
-    header {
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Loading Screen */
+    .loading-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      height: 100%;
+      background: var(--clr-bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 3px solid hsla(0, 0%, 100%, 0.1);
+      border-top: 3px solid var(--clr-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Scroll Progress Bar */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--clr-primary), var(--clr-secondary));
+      z-index: 9999;
+      transition: width 0.1s ease;
+    }
+
+    /* 3D Background Canvas */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.8;
+    }
+
+    /* Floating Shapes */
+    .floating-shapes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .shape {
+      position: absolute;
+      background: linear-gradient(45deg, var(--clr-primary), var(--clr-secondary));
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: float 20s infinite linear;
+    }
+
+    .shape:nth-child(1) { width: 80px; height: 80px; top: 20%; left: 10%; animation-delay: 0s; }
+    .shape:nth-child(2) { width: 120px; height: 120px; top: 60%; left: 80%; animation-delay: -5s; }
+    .shape:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 20%; animation-delay: -10s; }
+    .shape:nth-child(4) { width: 100px; height: 100px; top: 30%; left: 70%; animation-delay: -15s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+      33% { transform: translateY(-30px) rotate(120deg) scale(1.1); }
+      66% { transform: translateY(15px) rotate(240deg) scale(0.9); }
+    }
+
+    /* Glassmorphism Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--clr-glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--clr-glass-border);
       z-index: 1000;
+      transition: var(--transition);
+    }
+
+    .navbar.scrolled {
+      background: hsla(240, 21%, 6%, 0.9);
+      backdrop-filter: blur(30px);
     }
 
     .nav-wrapper {
@@ -61,87 +179,185 @@
     }
 
     .logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--clr-primary);
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px hsla(248, 84%, 63%, 0.5);
     }
 
-    nav ul {
+    .nav-links {
       list-style: none;
       display: flex;
-      gap: 2rem;
+      gap: 2.5rem;
     }
 
-    nav a {
+    .nav-link {
       text-decoration: none;
-      color: var(--clr-dark);
+      color: var(--clr-light);
       font-weight: 500;
       position: relative;
+      transition: var(--transition);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-lg);
     }
 
-    nav a::after {
+    .nav-link::before {
       content: "";
       position: absolute;
-      left: 0;
-      bottom: -2px;
-      width: 0;
-      height: 2px;
-      background: var(--clr-primary);
+      inset: 0;
+      background: var(--clr-glass);
+      border-radius: var(--radius-lg);
+      opacity: 0;
       transition: var(--transition);
+      z-index: -1;
     }
 
-    nav a:hover::after {
-      width: 100%;
+    .nav-link:hover::before {
+      opacity: 1;
     }
 
-    /* Hamburger */
+    .nav-link:hover {
+      transform: translateY(-2px);
+      text-shadow: 0 0 20px hsla(0, 0%, 100%, 0.5);
+    }
+
+    /* Mobile Menu */
     .hamburger {
       display: none;
       flex-direction: column;
       gap: 6px;
       cursor: pointer;
+      padding: 0.5rem;
     }
 
     .hamburger span {
       width: 25px;
       height: 3px;
-      background: var(--clr-dark);
+      background: var(--clr-light);
       transition: var(--transition);
       border-radius: 2px;
     }
 
-    /* Mobile nav */
-    @media (max-width: 768px) {
-      nav ul {
-        position: fixed;
-        top: 70px;
-        right: -100%;
-        flex-direction: column;
-        background: var(--clr-light);
-        width: 200px;
-        padding: 2rem;
-        gap: 1.5rem;
-        box-shadow: -2px 0 12px rgba(0, 0, 0, 0.05);
-        transition: var(--transition);
-      }
-
-      nav ul.active {
-        right: 0;
-      }
-
-      .hamburger {
-        display: flex;
-      }
+    /* Enhanced Hero */
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      align-items: center;
+      gap: 3rem;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      perspective: 1000px;
+      padding: 120px 1.5rem 80px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    /* ---------------- Sections ---------------- */
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, var(--clr-primary) 0%, var(--clr-secondary) 50%, transparent 70%);
+      opacity: 0.1;
+      animation: rotate 30s infinite linear;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .hero-content {
+      z-index: 2;
+      transform-style: preserve-3d;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      margin-bottom: 1.5rem;
+      line-height: 1.1;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--clr-light), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: textGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes textGlow {
+      from { text-shadow: 0 0 20px hsla(0, 0%, 100%, 0.5); }
+      to { text-shadow: 0 0 40px hsla(262, 83%, 58%, 0.8); }
+    }
+
+    .hero-description {
+      font-size: 1.25rem;
+      margin-bottom: 2.5rem;
+      max-width: 500px;
+      opacity: 0.9;
+      line-height: 1.7;
+    }
+
+    /* 3D Button */
+    .btn-3d {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-secondary));
+      color: var(--clr-light);
+      padding: 1rem 2.5rem;
+      border-radius: var(--radius-xl);
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+      position: relative;
+      transform: perspective(1000px) rotateX(0deg);
+      transition: var(--transition-bounce);
+      box-shadow: 
+        0 10px 30px hsla(248, 84%, 63%, 0.4),
+        inset 0 1px 0 hsla(0, 0%, 100%, 0.2);
+      border: 1px solid hsla(0, 0%, 100%, 0.1);
+      cursor: pointer;
+    }
+
+    .btn-3d::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--clr-secondary), var(--clr-accent));
+      border-radius: var(--radius-xl);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .btn-3d:hover {
+      transform: perspective(1000px) rotateX(10deg) translateY(-5px);
+      box-shadow: 
+        0 20px 50px hsla(248, 84%, 63%, 0.6),
+        inset 0 1px 0 hsla(0, 0%, 100%, 0.3);
+    }
+
+    .btn-3d:hover::before {
+      opacity: 1;
+    }
+
+    .btn-3d span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Sections with reveal animation */
     section {
       padding: 120px 1.5rem 80px;
       max-width: 1200px;
       margin: 0 auto;
       opacity: 0;
-      transform: translateY(40px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transform: translateY(50px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      position: relative;
     }
 
     section.reveal {
@@ -149,149 +365,320 @@
       transform: translateY(0);
     }
 
-    /* Hero */
-    .hero {
+    .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      align-items: center;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
       gap: 2.5rem;
-      min-height: 100vh;
-      background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-secondary) 100%);
-      color: var(--clr-light);
+      perspective: 1000px;
+    }
+
+    /* 3D Feature Cards */
+    .feature-card {
+      background: var(--clr-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--clr-glass-border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
       position: relative;
+      transition: var(--transition);
+      transform-style: preserve-3d;
+      cursor: pointer;
       overflow: hidden;
     }
 
-    .hero::before {
+    .feature-card::before {
       content: "";
       position: absolute;
       top: 0;
-      right: -50%;
-      width: 100%;
-      height: 100%;
-      background: url("https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80") no-repeat center/cover;
-      opacity: 0.15;
-      transform: rotate(10deg);
-    }
-
-    .hero-content {
-      z-index: 1;
-    }
-
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      margin-bottom: 1rem;
-      line-height: 1.2;
-    }
-
-    .hero p {
-      font-size: 1.125rem;
-      margin-bottom: 2rem;
-      max-width: 480px;
-    }
-
-    .btn {
-      display: inline-block;
-      background: var(--clr-light);
-      color: var(--clr-primary);
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius-lg);
-      font-weight: 600;
-      transition: var(--transition);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-    }
-
-    /* Feature Grid */
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-    }
-
-    .feature-card {
-      background: var(--clr-light);
-      border-radius: var(--radius-lg);
-      padding: 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--clr-primary), transparent);
+      opacity: 0;
       transition: var(--transition);
     }
 
     .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      transform: perspective(1000px) rotateX(5deg) rotateY(5deg) translateZ(20px);
+      box-shadow: 
+        0 25px 60px hsla(0, 0%, 0%, 0.3),
+        0 10px 30px hsla(248, 84%, 63%, 0.2);
+      border-color: var(--clr-primary);
     }
 
-    .feature-card i {
-      font-size: 2rem;
-      color: var(--clr-primary);
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-card-icon {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.5rem;
+      display: block;
+      transform: translateZ(10px);
+    }
+
+    .feature-card-title {
       margin-bottom: 1rem;
+      font-size: 1.4rem;
+      font-weight: 700;
+      transform: translateZ(5px);
     }
 
-    .feature-card h3 {
-      margin-bottom: 0.75rem;
-      font-size: 1.25rem;
+    .feature-card-description {
+      font-size: 1rem;
+      opacity: 0.9;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
     }
 
-    .feature-card p {
-      font-size: 0.95rem;
-      color: #50506b;
-    }
-
-    /* Sample To‑Do UI */
-    .todo-sample {
-      margin-top: 1.5rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .todo-sample input {
-      flex: 1;
-      padding: 0.65rem 0.75rem;
-      border: 1px solid #ddd;
+    /* Enhanced Input Styles */
+    .glass-input {
+      padding: 0.75rem 1rem;
+      background: hsla(0, 0%, 100%, 0.1);
+      border: 1px solid hsla(0, 0%, 100%, 0.2);
       border-radius: var(--radius-lg);
-      outline: none;
+      color: var(--clr-light);
+      font-size: 0.95rem;
+      transition: var(--transition);
+      width: 100%;
     }
 
-    .todo-sample button {
-      background: var(--clr-primary);
+    .glass-input:focus {
+      outline: none;
+      border-color: var(--clr-primary);
+      box-shadow: 0 0 0 2px hsla(248, 84%, 63%, 0.2);
+      background: hsla(0, 0%, 100%, 0.15);
+    }
+
+    .glass-input::placeholder {
+      color: hsla(0, 0%, 100%, 0.6);
+    }
+
+    .glass-button {
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-secondary));
       border: none;
       color: var(--clr-light);
-      padding: 0.65rem 1rem;
+      padding: 0.75rem 1.5rem;
       border-radius: var(--radius-lg);
       cursor: pointer;
+      font-weight: 600;
       transition: var(--transition);
+      position: relative;
+      overflow: hidden;
     }
 
-    .todo-sample button:hover {
-      background: var(--clr-secondary);
+    .glass-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
-    /* Footer */
-    footer {
+    .glass-button::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: hsla(0, 0%, 100%, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s ease, height 0.3s ease;
+    }
+
+    .glass-button:hover::before {
+      width: 100px;
+      height: 100px;
+    }
+
+    .glass-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px hsla(248, 84%, 63%, 0.4);
+    }
+
+    .glass-button.listening {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.05) translateY(-2px); }
+    }
+
+    /* Task and Calendar Styles */
+    .task-list, .calendar-list {
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 1rem 0 0 0;
+      padding: 0;
+    }
+
+    .task-item {
+      background: hsla(0, 0%, 100%, 0.05);
+      margin: 0.5rem 0;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      border-left: 3px solid var(--clr-primary);
+      transition: var(--transition);
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    .calendar-item {
+      background: hsla(195, 100%, 50%, 0.1);
+      margin: 0.5rem 0;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      border-left: 3px solid var(--clr-secondary);
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .task-item:hover {
+      background: hsla(0, 0%, 100%, 0.1);
+      transform: translateX(5px);
+    }
+
+    /* Form Styles */
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group .glass-input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Footer Enhancement */
+    .footer {
       text-align: center;
       padding: 4rem 1.5rem 2rem;
-      color: #727489;
+      background: var(--clr-glass);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--clr-glass-border);
+      color: hsla(0, 0%, 100%, 0.8);
+      font-size: 0.95rem;
+      margin-top: 5rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .hero {
+        text-align: center;
+        padding: 100px 1rem 50px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .feature-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .btn-3d {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 80px;
+        right: -100%;
+        flex-direction: column;
+        background: var(--clr-glass);
+        backdrop-filter: blur(20px);
+        width: 250px;
+        padding: 2rem;
+        gap: 1.5rem;
+        border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+        border: 1px solid var(--clr-glass-border);
+        transition: var(--transition);
+      }
+
+      .nav-links.active {
+        right: 0;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      .input-group {
+        flex-direction: column;
+      }
+
+      .input-group .glass-input {
+        min-width: unset;
+      }
+    }
+
+    /* Error message styling */
+    .error-message {
+      color: #ef4444;
       font-size: 0.875rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Success message styling */
+    .success-message {
+      color: #22c55e;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
 <body>
-  <!-- ================= Navbar ================= -->
-  <header>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loader"></div>
+  </div>
+
+  <!-- Scroll Progress Bar -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Three.js Background -->
+  <canvas class="bg-canvas" id="bgCanvas"></canvas>
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <!-- Navigation -->
+  <header class="navbar" id="navbar">
     <div class="nav-wrapper">
       <div class="logo">TaskMate</div>
 
-      <nav>
-        <ul id="nav-links">
-          <li><a href="#home">Home</a></li>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#contact">Contact</a></li>
+      <nav class="desktop-nav">
+        <ul class="nav-links">
+          <li><a href="#home" class="nav-link">Home</a></li>
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#about" class="nav-link">About</a></li>
+          <li><a href="#contact" class="nav-link">Contact</a></li>
         </ul>
       </nav>
 
@@ -300,151 +687,464 @@
         <span></span>
         <span></span>
       </div>
+
+      <!-- Mobile Menu -->
+      <nav class="mobile-nav">
+        <ul class="nav-links" id="mobileNavLinks">
+          <li><a href="#home" class="nav-link">Home</a></li>
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#about" class="nav-link">About</a></li>
+          <li><a href="#contact" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
     </div>
   </header>
 
-  <!-- ================= Hero Section ================= -->
+  <!-- Hero Section -->
   <section class="hero" id="home">
     <div class="hero-content">
-      <h1>Turn Your Thoughts into Action</h1>
-      <p>Voice or text input converted into tasks, calendar events, and reminders.</p>
-      <a href="#features" class="btn">Start Organizing</a>
+      <h1 class="hero-title">Turn Your Thoughts into Action</h1>
+      <p class="hero-description">
+        Experience the future of productivity with AI-powered voice recognition, 
+        intelligent task management, and seamless calendar integration.
+      </p>
+      <a href="#features" class="btn-3d">
+        <span>Start Your Journey</span>
+      </a>
     </div>
   </section>
 
-  <!-- ================= Features ================= -->
-  <section id="features" class="reveal">
-    <div class="features">
+  <!-- Features Section -->
+  <section id="features" class="features-section">
+    <div class="features-grid">
+      
+      <!-- Smart To-Do List -->
+      <div class="feature-card" data-tilt>
+        <i class="fas fa-brain feature-card-icon"></i>
+        <h2 class="feature-card-title">Smart To-Do List</h2>
+        <p class="feature-card-description">Add tasks by typing or speaking with advanced AI processing. Our intelligent system organizes and prioritizes your thoughts automatically.</p>
         
-      <!-- Feature 1: To‑Do List -->
-      <!-- Inside your container 2 -->
-<div class="feature-card">
-  <!-- 📝 HTML -->
+        <div class="input-group">
+          <input type="text" id="taskInput" placeholder="Enter your task or speak..." class="glass-input" />
+          <button id="addTaskBtn" class="glass-button">Add Task</button>
+          <button id="speakBtn" class="glass-button">🎤 Speak</button>
+        </div>
+        
+        <div id="speechError" class="error-message" style="display: none;"></div>
+        <ul id="taskList" class="task-list"></ul>
+      </div>
 
-  <h2>Smart To‑Do List</h2>
-  <p>Add tasks by typing or speaking, and we’ll keep them organized for you.</p>
-  <div class="todo-input">
-    <input type="text" id="taskInput" placeholder="Enter your task..." />
-    <button id="addTaskBtn">Add</button>
-    <button id="speakBtn">🎤 Speak</button>
-  </div>
-  <ul id="taskList"></ul>
-</div>
+      <!-- Calendar Integration -->
+      <div class="feature-card" data-tilt>
+        <i class="fas fa-calendar-alt feature-card-icon"></i>
+        <h2 class="feature-card-title">Smart Calendar</h2>
+        <p class="feature-card-description">Automatically schedule tasks and events with intelligent time management. Never miss important deadlines again.</p>
+        
+        <form id="calendarForm" class="form-grid">
+          <input type="text" id="eventName" placeholder="Event Name" required class="glass-input" />
+          <input type="datetime-local" id="eventTime" required class="glass-input" />
+          <button type="submit" class="glass-button">Add to Calendar</button>
+        </form>
+        
+        <ul id="calendarList" class="calendar-list"></ul>
+      </div>
 
-<!-- 🧠 JS -->
-<script>
-  const taskInput = document.getElementById("taskInput");
-  const taskList = document.getElementById("taskList");
-
-  document.getElementById("addTaskBtn").addEventListener("click", () => {
-    const value = taskInput.value.trim();
-    if (value) {
-      addTask(value);
-      taskInput.value = "";
-    }
-  });
-
-  document.getElementById("speakBtn").addEventListener("click", () => {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-
-    recognition.onresult = function (event) {
-      const spokenText = event.results[0][0].transcript;
-      taskInput.value = spokenText; // Show text in input box
-      addTask(spokenText);          // Also add to list automatically
-    };
-
-    recognition.onerror = function (e) {
-      alert("Voice error: " + e.error);
-    };
-
-    recognition.start();
-  });
-
-  function addTask(taskText) {
-    const li = document.createElement("li");
-    li.textContent = taskText;
-    taskList.appendChild(li);
-  }
-</script>
-
-
-
-      <!-- Feature 2: Calendar Integration -->
-      <!-- Inside your container 3 -->
-<div class="feature-card">
-  <h2>Mark Your Calendar</h2>
-  <p>Automatically schedule tasks and events on your calendar.</p>
-  <form id="calendarForm">
-    <input type="text" id="eventName" placeholder="Event Name" required />
-    <input type="datetime-local" id="eventTime" required />
-    <button type="submit">Add to Calendar</button>
-  </form>
-  <ul id="calendarList"></ul>
-</div>
-
-<script>
-  const calendarForm = document.getElementById("calendarForm");
-  const calendarList = document.getElementById("calendarList");
-
-  calendarForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const name = document.getElementById("eventName").value;
-    const time = document.getElementById("eventTime").value;
-    if (name && time) {
-      const li = document.createElement("li");
-      li.textContent = `${name} @ ${new Date(time).toLocaleString()}`;
-      calendarList.appendChild(li);
-      calendarForm.reset();
-    }
-  });
-</script>
-
-
-      <!-- Feature 3: Notifications -->
-      <div class="feature-card">
-        <i class="fas fa-bell"></i>
-        <h3>Never Miss a Thing</h3>
-        <p>Get timely notifications and reminders for every task and event.</p>
-        <img src="https://images.unsplash.com/photo-1557682250-34b23b6dfee8?auto=format&fit=crop&w=400&q=80" alt="Notification preview" style="width:100%; border-radius: var(--radius-lg); margin-top:1.5rem;" />
+      <!-- AI Notifications -->
+      <div class="feature-card" data-tilt>
+        <i class="fas fa-robot feature-card-icon"></i>
+        <h2 class="feature-card-title">AI-Powered Notifications</h2>
+        <p class="feature-card-description">Get intelligent reminders and notifications powered by machine learning. Our AI learns your patterns and optimizes your productivity.</p>
+        
+        <div class="mt-6">
+          <img
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+            alt="AI-powered dashboard interface"
+            style="width: 100%; border-radius: var(--radius-xl); opacity: 0.8; margin-top: 1.5rem;"
+          />
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ================= Footer ================= -->
-  <footer>
-    © <span id="year"></span> TaskMate. All rights reserved.
+  <!-- Footer -->
+  <footer class="footer">
+    © <span id="currentYear"></span> TaskMate. Powered by cutting-edge AI technology.
   </footer>
 
   <script>
-    // Current year in footer
-    document.getElementById("year").textContent = new Date().getFullYear();
+    // Global variables
+    let particleSystem = null;
+    let animationId = null;
+    let tasks = [];
+    let events = [];
+    let taskCounter = 0;
 
-    // Hamburger menu toggle
-    const hamburger = document.getElementById("hamburger");
-    const navLinks = document.getElementById("nav-links");
-
-    hamburger.addEventListener("click", () => {
-      navLinks.classList.toggle("active");
-      hamburger.classList.toggle("open");
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeApp();
     });
 
-    // Reveal on scroll
-    const revealElements = document.querySelectorAll("section");
+    function initializeApp() {
+      // Hide loading screen after a delay
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+      }, 1000);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("reveal");
-            observer.unobserve(entry.target);
-          }
+      // Set current year
+      document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+      // Initialize Three.js background
+      initThreeJS();
+
+      // Setup event listeners
+      setupEventListeners();
+
+      // Setup scroll effects
+      setupScrollEffects();
+
+      // Setup reveal animations
+      setupRevealAnimations();
+
+      // Setup 3D card effects
+      setup3DCardEffects();
+    }
+
+    // Three.js Background Setup
+    function initThreeJS() {
+      const canvas = document.getElementById('bgCanvas');
+      if (!canvas || !window.THREE) return;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // Create particles
+      const particleCount = 100;
+      const positions = new Float32Array(particleCount * 3);
+      const velocities = [];
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 10;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+        
+        velocities.push({
+          x: (Math.random() - 0.5) * 0.01,
+          y: (Math.random() - 0.5) * 0.01,
+          z: (Math.random() - 0.5) * 0.01
         });
-      },
-      { threshold: 0.15 }
-    );
+      }
 
-    revealElements.forEach((el) => observer.observe(el));
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const material = new THREE.PointsMaterial({
+        color: 0x5d5fef,
+        size: 0.05,
+        transparent: true,
+        opacity: 0.6
+      });
+
+      const particles = new THREE.Points(geometry, material);
+      scene.add(particles);
+      camera.position.z = 5;
+
+      particleSystem = { scene, camera, renderer, particles, velocities };
+
+      // Animation loop
+      function animate() {
+        if (particleSystem) {
+          animateParticles();
+        }
+        animationId = requestAnimationFrame(animate);
+      }
+      animate();
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        if (particleSystem) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      });
+    }
+
+    function animateParticles() {
+      if (!particleSystem) return;
+
+      const { particles, velocities, renderer, scene, camera } = particleSystem;
+      const particleCount = velocities.length;
+
+      // Update particle positions
+      const positions = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] += velocities[i].x;
+        positions[i * 3 + 1] += velocities[i].y;
+        positions[i * 3 + 2] += velocities[i].z;
+
+        // Wrap around screen
+        if (positions[i * 3] > 5) positions[i * 3] = -5;
+        if (positions[i * 3] < -5) positions[i * 3] = 5;
+        if (positions[i * 3 + 1] > 5) positions[i * 3 + 1] = -5;
+        if (positions[i * 3 + 1] < -5) positions[i * 3 + 1] = 5;
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      particles.rotation.x += 0.001;
+      particles.rotation.y += 0.002;
+
+      renderer.render(scene, camera);
+    }
+
+    // Event Listeners Setup
+    function setupEventListeners() {
+      // Mobile menu toggle
+      const hamburger = document.getElementById('hamburger');
+      const mobileNavLinks = document.getElementById('mobileNavLinks');
+      
+      hamburger.addEventListener('click', () => {
+        mobileNavLinks.classList.toggle('active');
+      });
+
+      // Smooth scrolling for navigation
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.querySelector(link.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          mobileNavLinks.classList.remove('active');
+        });
+      });
+
+      // Task management
+      const taskInput = document.getElementById('taskInput');
+      const addTaskBtn = document.getElementById('addTaskBtn');
+      const speakBtn = document.getElementById('speakBtn');
+
+      addTaskBtn.addEventListener('click', () => {
+        const value = taskInput.value.trim();
+        if (value) {
+          addTask(value);
+          taskInput.value = '';
+        }
+      });
+
+      taskInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const value = taskInput.value.trim();
+          if (value) {
+            addTask(value);
+            taskInput.value = '';
+          }
+        }
+      });
+
+      // Speech recognition
+      speakBtn.addEventListener('click', startSpeechRecognition);
+
+      // Calendar management
+      const calendarForm = document.getElementById('calendarForm');
+      calendarForm.addEventListener('submit', handleCalendarSubmit);
+    }
+
+    // Speech Recognition
+    function startSpeechRecognition() {
+      const speakBtn = document.getElementById('speakBtn');
+      const speechError = document.getElementById('speechError');
+      const taskInput = document.getElementById('taskInput');
+
+      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        showError('Speech recognition is not supported in this browser');
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      speakBtn.classList.add('listening');
+      speakBtn.textContent = '🎤 Listening...';
+      speakBtn.disabled = true;
+      speechError.style.display = 'none';
+
+      recognition.onstart = () => {
+        console.log('Speech recognition started');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        taskInput.value = transcript;
+        addTask(transcript);
+        taskInput.value = '';
+      };
+
+      recognition.onerror = (event) => {
+        showError(`Speech recognition error: ${event.error}`);
+      };
+
+      recognition.onend = () => {
+        speakBtn.classList.remove('listening');
+        speakBtn.textContent = '🎤 Speak';
+        speakBtn.disabled = false;
+      };
+
+      recognition.start();
+    }
+
+    function showError(message) {
+      const speechError = document.getElementById('speechError');
+      speechError.textContent = message;
+      speechError.style.display = 'block';
+      setTimeout(() => {
+        speechError.style.display = 'none';
+      }, 5000);
+    }
+
+    // Task Management
+    function addTask(taskText) {
+      if (!taskText.trim()) return;
+
+      const task = {
+        id: Date.now(),
+        text: taskText.trim(),
+        createdAt: new Date()
+      };
+
+      tasks.push(task);
+      taskCounter++;
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = '';
+
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.style.animationDelay = `${index * 0.1}s`;
+        li.textContent = `${taskCounter - tasks.length + index + 1}. ${task.text}`;
+        taskList.appendChild(li);
+      });
+    }
+
+    // Calendar Management
+    function handleCalendarSubmit(e) {
+      e.preventDefault();
+      
+      const eventName = document.getElementById('eventName').value.trim();
+      const eventTime = document.getElementById('eventTime').value;
+      
+      if (!eventName || !eventTime) return;
+
+      const event = {
+        id: Date.now(),
+        name: eventName,
+        time: new Date(eventTime),
+        createdAt: new Date()
+      };
+
+      events.push(event);
+      renderEvents();
+      
+      // Reset form
+      document.getElementById('eventName').value = '';
+      document.getElementById('eventTime').value = '';
+    }
+
+    function renderEvents() {
+      const calendarList = document.getElementById('calendarList');
+      calendarList.innerHTML = '';
+
+      events.forEach((event, index) => {
+        const li = document.createElement('li');
+        li.className = 'calendar-item';
+        li.style.animationDelay = `${index * 0.1}s`;
+        li.innerHTML = `
+          <div style="font-weight: 600;">${event.name}</div>
+          <div style="font-size: 0.875rem; opacity: 0.8;">
+            ${event.time.toLocaleDateString()} at ${event.time.toLocaleTimeString()}
+          </div>
+        `;
+        calendarList.appendChild(li);
+      });
+    }
+
+    // Scroll Effects
+    function setupScrollEffects() {
+      const navbar = document.getElementById('navbar');
+      const scrollProgress = document.getElementById('scrollProgress');
+
+      window.addEventListener('scroll', () => {
+        // Scroll progress
+        const scrollPercent = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+        scrollProgress.style.width = `${scrollPercent}%`;
+
+        // Navbar background
+        if (window.scrollY > 100) {
+          navbar.classList.add('scrolled');
+        } else {
+          navbar.classList.remove('scrolled');
+        }
+      });
+    }
+
+    // Reveal Animations
+    function setupRevealAnimations() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('reveal');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+
+      const sections = document.querySelectorAll('section');
+      sections.forEach((section) => observer.observe(section));
+    }
+
+    // 3D Card Effects
+    function setup3DCardEffects() {
+      const cards = document.querySelectorAll('[data-tilt]');
+      
+      cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          const rotateX = (y - centerY) / 10;
+          const rotateY = (centerX - x) / 10;
+          
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+        });
+        
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+        });
+      });
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    });
   </script>
 </body>
 </html>
