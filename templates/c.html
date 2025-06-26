@@ -1047,23 +1047,32 @@
 
     // AI Processing (Simulated)
     function processAIMessage(userMessage) {
-      isTyping = true;
-      showTypingIndicator();
-      
-      // Simulate AI processing delay
-      setTimeout(() => {
-        const response = generateAIResponse(userMessage);
-        hideTypingIndicator();
-        addMessage('assistant', response.message, response.data);
-        
-        // Execute any commands
-        if (response.command) {
-          executeCommand(response.command);
-        }
-        
-        isTyping = false;
-      }, 1000 + Math.random() * 2000);
+  isTyping = true;
+  showTypingIndicator();
+
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message: userMessage })
+  })
+  .then(response => response.json())
+  .then(data => {
+    hideTypingIndicator();
+    if (data.reply) {
+      addMessage('assistant', data.reply);
+    } else {
+      addMessage('assistant', 'Sorry, I could not understand that.');
     }
+    isTyping = false;
+  })
+  .catch(() => {
+    hideTypingIndicator();
+    addMessage('assistant', 'Something went wrong. Please try again.');
+    isTyping = false;
+  });
+}
 
     function generateAIResponse(message) {
       const lowerMessage = message.toLowerCase();
@@ -1146,7 +1155,14 @@
       
       return null;
     }
+    // Integrate with Google API key (for example, Dialogflow or PaLM API)
+    // Place your API key here if you want to use a real AI backend.
+    // Example usage:
+    // const GOOGLE_API_KEY = 'AIzaSyDRcSFJ7zDjxB6QMT-UpnQY-oFlODoP5XA';
+    // You can use this key in your fetch/axios requests to Google AI services.
 
+    // NOTE: For security, never expose API keys in client-side code in production.
+    // This is only for demo/testing purposes. Use a backend proxy for real apps.
     function extractStatus(message) {
       if (message.includes('pending')) return 'pending';
       if (message.includes('progress') || message.includes('working')) return 'in_progress';

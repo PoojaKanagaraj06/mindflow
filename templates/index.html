@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<!-- Chatbot Floating Button -->
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -159,7 +160,18 @@
     .page-section.active {
       display: block;
     }
-
+#chat-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #007bff;
+      color: white;
+      padding: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
     /* Glassmorphism Navbar */
     .navbar {
       position: fixed;
@@ -992,6 +1004,7 @@
   </style>
 </head>
 <body>
+
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loader"></div>
@@ -1032,7 +1045,7 @@
       
     </div>
   </header>
-
+<div id="chat-icon" onclick="goToChat()">💬</div>
   <!-- Home Section -->
   <div id="home" class="page-section active">
     <!-- Hero Section -->
@@ -1040,7 +1053,7 @@
       <div class="hero-content">
         <h1 class="hero-title">Turn Your Thoughts into Action</h1>
         <p class="hero-description">
-          Experience the future of productivity with AI-powered voice recognition, 
+            <a href="/c" style="color: #5d5fef; text-decoration: underline; cursor: pointer;">Experience the future of productivity with AI-powered voice recognition</a>,
           intelligent task management, and seamless calendar integration.
         </p>
         <button class="btn-3d" onclick="showSection('tasks')">
@@ -1048,7 +1061,8 @@
         </button>
       </div>
     </section>
-
+ 
+  
     <!-- Features Section -->
     <section class="features-section">
       <div class="features-grid">
@@ -1157,30 +1171,7 @@
         </div>
       </div>
       <!-- Chatbot Icon Button -->
-      <button 
-        id="chatbotBtn" 
-        title="Open Chatbot" 
-        style="
-          position: fixed;
-          bottom: 32px;
-          right: 32px;
-          z-index: 10001;
-          background: linear-gradient(135deg, var(--clr-primary), var(--clr-secondary));
-          color: #fff;
-          border: none;
-          border-radius: 50%;
-          width: 64px;
-          height: 64px;
-          box-shadow: 0 8px 32px rgba(93,95,239,0.25);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 2rem;
-          cursor: pointer;
-          transition: box-shadow 0.2s;
-        "
-        onclick="window.location.href='taskmate-chatbot.html';"
-      >
+      
         <i class="fas fa-comments"></i>
       </button>
       <!-- Event Input Section -->
@@ -1245,7 +1236,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
     });
-
+    function goToChat() {
+      window.location.href = "/c";  // Redirect to chatbot page
+    }
     function initializeApp() {
       // Hide loading screen after a delay
       setTimeout(() => {
@@ -1418,7 +1411,9 @@
       hamburger.addEventListener('click', () => {
         mobileNavLinks.classList.toggle('active');
       });
-
+    function goToChat() {
+      window.location.href = "c.html";  // Redirect to chatbot page
+    }
       // Task management
       const taskInput = document.getElementById('taskInput');
       const addTaskBtn = document.getElementById('addTaskBtn');
