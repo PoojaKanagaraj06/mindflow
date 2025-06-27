@@ -4,10 +4,10 @@ import google.generativeai as genai
 import traceback
 
 # ✅ Configure Gemini API
-GOOGLE_API_KEY = "AIzaSyDRcSFJ7zDjxB6QMT-UpnQY-oFlODoP5XA"
+GOOGLE_API_KEY = AIzaSyDRcSFJ7zDjxB6QMT-UpnQY-oFlODoP5XA
 genai.configure(api_key=GOOGLE_API_KEY)
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 # ✅ Serve homepage
 @app.route('/')
@@ -36,7 +36,7 @@ def chat_with_bot():
 
     try:
         # ✅ Use Gemini Pro directly
-        model = genai.GenerativeModel("")
+        model = genai.GenerativeModel("models/learnlm-2.0-flash-experimental")
         response = model.generate_content(user_input)
 
         print("✅ Gemini response:", response.text)
@@ -65,5 +65,5 @@ def process_voice_task():
         return jsonify({"error": "Could not understand audio"}), 400
 
 # ✅ Run Flask app
-if __name__ == '__main__':
+if _name_ == '_main_':
     app.run(debug=True)
