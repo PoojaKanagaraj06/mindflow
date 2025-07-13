@@ -732,12 +732,12 @@
       opacity: 1;
     }
 
-    .task-action-btn {
+    .task-action-btn-ct {
       width: 28px;
       height: 28px;
       border: none;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(227, 10, 10, 0.1);
       color: inherit;
       cursor: pointer;
       transition: var(--transition);
@@ -747,8 +747,27 @@
       font-size: 0.8rem;
     }
 
-    .task-action-btn:hover {
-      background: rgba(0, 0, 0, 0.2);
+    .task-action-btn-ct:hover {
+      background: linear-gradient(135deg, #029622 0%, #1de982 50%, #0a7d3c 100%);
+      transform: scale(1.1);
+    }
+    .task-action-btn-dt {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(227, 10, 10, 0.1);
+      color: inherit;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+
+    .task-action-btn-dt:hover {
+      background: linear-gradient(135deg, rgba(226, 2, 2, 0.523) 0%, rgba(174, 0, 0, 0.966) 50%, rgba(255,80,80,0.2) 100%);
       transform: scale(1.1);
     }
 
@@ -1053,7 +1072,7 @@
       <div class="hero-content">
         <h1 class="hero-title">Turn Your Thoughts into Action</h1>
         <p class="hero-description">
-            <a href="/c" style="color: #5d5fef; text-decoration: underline; cursor: pointer;">Experience the future of productivity with AI-powered voice recognition</a>,
+            Experience the future of productivity with AI-powered voice recognition,
           intelligent task management, and seamless calendar integration.
         </p>
         <button class="btn-3d" onclick="showSection('tasks')">
@@ -1138,10 +1157,40 @@
           </div>
         </div>
       </div>
+ <section id="todo" class="page-section">
+    <div class="page-container">
+      <div class="page-header">
+        <h2 class="page-title">Smart To-Do List</h2>
+        <p class="page-subtitle">Manage your tasks with intelligent voice recognition and AI-powered organization</p>
+      </div>
+      
+      <div class="todo-container">
+        <!-- Input Section -->
+        <div class="todo-input-section fade-in">
+          <div class="input-group">
+            <input type="text" class="todo-input" id="todoInput" placeholder="What needs to be done?">
+            <button class="voice-btn" id="voiceBtn" title="Click to speak">
+              <i class="fas fa-microphone"></i>
+            </button>
+            <select class="priority-select" id="prioritySelect">
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+            </select>
+            <button class="add-btn" id="addBtn">Add Task</button>
+          </div>
+        </div>
 
+        <!-- Task List -->
+        <div class="todo-list" id="todoList">
+          <!-- Empty state will be shown here initially -->
+        </div>
+      </div>
+    </div>
+  </section>
       <!-- Sticky Notes Container -->
       <div class="sticky-notes-container" id="taskContainer">
-        <!-- Tasks will be dynamically added here -->
+        <!-- Tasks will be dynamicallyki added here -->
       </div>
     </div>
   </div>
@@ -1170,7 +1219,8 @@
           <!-- Calendar days will be generated here -->
         </div>
       </div>
-      <!-- Chatbot Icon Button -->
+      
+      
       
         <i class="fas fa-comments"></i>
       </button>
@@ -1412,7 +1462,7 @@
         mobileNavLinks.classList.toggle('active');
       });
     function goToChat() {
-      window.location.href = "c.html";  // Redirect to chatbot page
+      window.location.href = "/c";  // Redirect to chatbot page
     }
       // Task management
       const taskInput = document.getElementById('taskInput');
@@ -1594,11 +1644,11 @@
       taskElement.className = `sticky-note ${task.completed ? 'completed' : ''} new`;
       taskElement.innerHTML = `
         <div class="task-actions">
-          <button class="task-action-btn" onclick="toggleTask('${task.id}')" title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
+          <button class="task-action-btn-ct" onclick="toggleTask('${task.id}')" title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
             <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
           </button>
-          <button class="task-action-btn" onclick="deleteTask('${task.id}')" title="Delete task">
-            <i class="fas fa-trash"></i>
+          <button class="task-action-btn-dt" onclick="deleteTask('${task.id}')" title="Delete task">
+            
           </button>
         </div>
         <div class="task-text">${escapeHtml(task.text)}</div>

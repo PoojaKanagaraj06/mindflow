@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | TaskMate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+   <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+  <!-- 3D Canvas Background -->
+  <canvas id="bgCanvas"></canvas>
+
+
+
+  <!-- Auth Forms -->
+  <div class="auth-wrapper">
+    <div class="auth-box">
+      <!-- Login Form -->
+      <form id="loginForm" class="auth-form" method="post">
+  <h2>Login</h2>
+  <input type="email" id="loginEmail" placeholder="Email" required />
+  <input type="password" id="loginPassword" placeholder="Password" required />
+  <button type="submit" class="glass-button">Login</button>
+  <div style="text-align: center; margin: 1rem 0;">
+  <p style="color: #aaa;">or</p>
+  <button type="button" id="googleSignIn" class="google-button">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+         alt="Google logo" style="height: 20px; vertical-align: middle; margin-right: 8px;">
+    Sign in with Google
+  </button>
+</div>
+  <p>Don't have an account? <a href="#" onclick="switchAuthForm('signup')">Sign Up</a></p>
+</form>
+
+
+      <!-- Signup Form -->
+      <form id="signupForm" class="auth-form" style="display: none;">
+        <h2>Sign Up</h2>
+        <input type="text" id="signupName" placeholder="Full Name" required />
+        <input type="email" id="signupEmail" placeholder="Email" required />
+        <input type="password" id="signupPassword" placeholder="Password" required />
+        <button type="submit" class="glass-button">Create Account</button>
+        <p>Already have an account? <a href="#" onclick="switchAuthForm('login')">Login</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase + Logic -->
+   <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
+  <!-- 3D Background -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const canvas = document.getElementById('bgCanvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const particleCount = 200;
+    const particlesGeometry = new THREE.BufferGeometry();
+    const positions = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      positions.push((Math.random() - 0.5) * 20);
+      positions.push((Math.random() - 0.5) * 20);
+      positions.push((Math.random() - 0.5) * 20);
+    }
+
+    particlesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+    const particlesMaterial = new THREE.PointsMaterial({
+      color: 0x5d5fef,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.6
+    });
+
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particles);
+
+    camera.position.z = 5;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      particles.rotation.x += 0.001;
+      particles.rotation.y += 0.001;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

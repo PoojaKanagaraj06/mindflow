@@ -1,23 +1,45 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import speech_recognition as sr
 import google.generativeai as genai
 import traceback
 
-# ✅ Configure Gemini API
-GOOGLE_API_KEY = AIzaSyDRcSFJ7zDjxB6QMT-UpnQY-oFlODoP5XA
+# ✅ Configure Gemini API key
+GOOGLE_API_KEY = "AIzaSyD2sEFKO6JA_REYUAtteHTmtoO9m2LPxKI"
 genai.configure(api_key=GOOGLE_API_KEY)
+'''
+for m in genai.list_models():
+    print(m.name, m.supported_generation_methods)'''
+app = Flask(__name__)
 
-app = Flask(_name_)
-
-# ✅ Serve homepage
+# ✅ Serve login page
 @app.route('/')
 def home():
+    return render_template('login.html')
+
+# ✅ Serve index page after login
+@app.route('/index')
+def index():
     return render_template('index.html')
 
 # ✅ Serve chatbot page
 @app.route('/c')
 def goToChat():
     return render_template('c.html')
+
+# ✅ Handle login form submission
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    # Simple hardcoded login check (demo only)
+    if username == 'admin' and password == 'admin':
+        return redirect(url_for('index'))
+    else:
+        error = "Invalid username or password"
+        return render_template('login.html', error=error)
+
+# ✅ List available Gemini models
 @app.route('/api/models', methods=['GET'])
 def list_models():
     try:
@@ -27,16 +49,19 @@ def list_models():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ✅ Handle chat input using Gemini
+# ✅ Handle chat with Gemini
 @app.route('/api/chat', methods=['POST'])
 def chat_with_bot():
-    user_input = request.json.get("message", "")
-    if not user_input:
-        return jsonify({"error": "Empty message"}), 400
-
     try:
-        # ✅ Use Gemini Pro directly
-        model = genai.GenerativeModel("models/learnlm-2.0-flash-experimental")
+        data = request.get_json()
+        user_input = data.get("message", "")
+        print("🟢 User input received:", user_input)
+
+        if not user_input:
+            return jsonify({"error": "Empty message"}), 400
+
+        # ✅ Correct Gemini model name
+        model = genai.GenerativeModel("models/gemini-2.5-flash-lite-preview-06-17") 
         response = model.generate_content(user_input)
 
         print("✅ Gemini response:", response.text)
@@ -65,5 +90,5 @@ def process_voice_task():
         return jsonify({"error": "Could not understand audio"}), 400
 
 # ✅ Run Flask app
-if _name_ == '_main_':
+if __name__ == '__main__':
     app.run(debug=True)

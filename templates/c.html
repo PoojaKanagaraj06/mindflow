@@ -691,21 +691,10 @@
     <!-- Task Sidebar -->
     <div class="task-sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-title">
-          <i class="fas fa-tasks"></i>
-          My Tasks
-          <span class="task-count" id="taskCount">0</span>
-        </div>
-        <div class="filter-buttons">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="pending">Pending</button>
-          <button class="filter-btn" data-filter="in_progress">In Progress</button>
-          <button class="filter-btn" data-filter="completed">Completed</button>
-        </div>
+       
+       
       </div>
-      <div class="tasks-list" id="tasksList">
-        <!-- Tasks will be populated here -->
-      </div>
+      
     </div>
 
     <!-- Chat Interface -->
@@ -954,7 +943,97 @@
       document.getElementById('messageInput').value = text;
       sendMessage();
     }
+    // Fetch and display task stats from index.html (simulate API or localStorage)
+    function fetchTaskStats() {
+      // Simulate fetching from index.html or localStorage
+      const allTasks = tasks;
+      const completed = allTasks.filter(t => t.status === 'completed').length;
+      const pending = allTasks.filter(t => t.status === 'pending').length;
+      const today = allTasks.filter(t => {
+      const created = new Date(t.createdAt);
+      const now = new Date();
+      return created.getDate() === now.getDate() &&
+           created.getMonth() === now.getMonth() &&
+           created.getFullYear() === now.getFullYear();
+      }).length;
 
+      return { completed, pending, today };
+    }
+
+    // Render sidebar header and stats
+    function renderSidebarHeader() {
+      const stats = fetchTaskStats();
+      const sidebarHeader = document.querySelector('.sidebar-header');
+      sidebarHeader.innerHTML = `
+      <div class="sidebar-title">
+        <i class="fas fa-tasks"></i> Tasks
+        <span class="task-count" id="taskCount">${tasks.length}</span>
+      </div>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending (${stats.pending})</button>
+        <button class="filter-btn" data-filter="in_progress">In Progress</button>
+        <button class="filter-btn" data-filter="completed">Completed (${stats.completed})</button>
+        <button class="filter-btn" data-filter="today">Today (${stats.today})</button>
+      </div>
+      `;
+    }
+
+    // Render tasks list container
+    function renderTasksListContainer() {
+      const sidebar = document.querySelector('.task-sidebar');
+      let tasksList = document.getElementById('tasksList');
+      if (!tasksList) {
+      tasksList = document.createElement('div');
+      tasksList.id = 'tasksList';
+      tasksList.className = 'tasks-list';
+      sidebar.appendChild(tasksList);
+      }
+    }
+
+    // Extend setFilter to handle "today"
+    const originalSetFilter = setFilter;
+    setFilter = function(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+      if (filter === 'today') {
+      const today = new Date();
+      const filteredTasks = tasks.filter(t => {
+        const created = new Date(t.createdAt);
+        return created.getDate() === today.getDate() &&
+           created.getMonth() === today.getMonth() &&
+           created.getFullYear() === today.getFullYear();
+      });
+      renderCustomTasks(filteredTasks);
+      } else {
+      renderTasks();
+      }
+    };
+
+    function renderCustomTasks(filteredTasks) {
+      const container = document.getElementById('tasksList');
+      container.innerHTML = '';
+      if (filteredTasks.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: hsla(0, 0%, 100%, 0.6);">
+        <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <div>No tasks for today</div>
+        </div>
+      `;
+      updateTaskCount(0);
+      return;
+      }
+      filteredTasks.forEach(task => {
+      const taskElement = createTaskElement(task);
+      container.appendChild(taskElement);
+      });
+      updateTaskCount(filteredTasks.length);
+    }
+
+    // Call sidebar renderers on load
+    renderSidebarHeader();
+    renderTasksListContainer();
     function addMessage(role, content, data = null) {
       const timestamp = new Date().toISOString();
       const message = { id: Date.now(), role, content, timestamp, data };
