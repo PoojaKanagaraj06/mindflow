@@ -4,7 +4,6 @@ import google.generativeai as genai
 import traceback
 
 # ✅ Configure Gemini API key
-GOOGLE_API_KEY = "AIzaSyD2sEFKO6JA_REYUAtteHTmtoO9m2LPxKI"
 genai.configure(api_key=GOOGLE_API_KEY)
 '''
 for m in genai.list_models():
