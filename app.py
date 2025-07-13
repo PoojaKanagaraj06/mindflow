@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 import speech_recognition as sr
 import google.generativeai as genai
 import traceback
-
+GOOGLE_API_KEY = "AIzaSyD2sEFKO6JA_REYUAtteHTmtoO9m2LPxKI"
 # ✅ Configure Gemini API key
 genai.configure(api_key=GOOGLE_API_KEY)
 '''
