@@ -2,9 +2,9 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 import speech_recognition as sr
 import google.generativeai as genai
 import traceback
-
-# ✅ Configure Gemini API key
+import os
 GOOGLE_API_KEY = "AIzaSyD2sEFKO6JA_REYUAtteHTmtoO9m2LPxKI"
+# ✅ Configure Gemini API key
 genai.configure(api_key=GOOGLE_API_KEY)
 '''
 for m in genai.list_models():
@@ -91,4 +91,5 @@ def process_voice_task():
 
 # ✅ Run Flask app
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Render sets the PORT env var
+    app.run(host='0.0.0.0', port=port, debug=True)
