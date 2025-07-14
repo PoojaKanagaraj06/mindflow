@@ -1,5 +1,5 @@
-<!-- Chatbot Floating Button -->
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -26,6 +26,10 @@
   
   <!-- GSAP for animations -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <style>
     :root {
@@ -1272,16 +1276,42 @@
   <footer class="footer">
     © <span id="currentYear"></span> TaskMate. Powered by cutting-edge AI technology.
   </footer>
-
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAxhL77J1VfZJd3rqRyR-AtlPYSnZoXnn4",
+      authDomain: "task-mate-90eee.firebaseapp.com",
+      projectId: "task-mate-90eee",
+      storageBucket: "task-mate-90eee.firebasestorage.app",
+      messagingSenderId: "112228413597",
+      appId: "1:112228413597:web:9f77d62ecf0478394f6474",
+      measurementId: "G-YVTN10T1Q2"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig); 
+    const database = firebase.database();
+    const tasksRef = database.ref('tasks');
+    const eventsRef = database.ref('events');
+    
     // Global variables
     let particleSystem = null;
     let animationId = null;
-    let tasks = JSON.parse(localStorage.getItem('taskmate_tasks')) || [];
-    let events = JSON.parse(localStorage.getItem('taskmate_events')) || [];
+    let tasks = [];
+    let events = [];
     let taskCounter = 0;
     let currentDate = new Date();
-
+        // Make functions globally available
+    window.loadTasksFromFirebase = loadTasksFromFirebase;
+    window.addTask = addTask;
+    window.toggleTask = toggleTask;
+    window.deleteTask = deleteTask;
+    window.renderTasks = renderTasks;
+    window.updateStatistics = updateStatistics;
     // Initialize everything when page loads
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
@@ -1289,40 +1319,87 @@
     function goToChat() {
       window.location.href = "/c";  // Redirect to chatbot page
     }
-    function initializeApp() {
-      // Hide loading screen after a delay
-      setTimeout(() => {
-        document.getElementById('loadingOverlay').classList.add('hidden');
-      }, 1000);
+   function initializeApp() {
+  // Hide loading screen after a delay
+  setTimeout(() => {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+  }, 1000);
 
-      // Set current year
-      document.getElementById('currentYear').textContent = new Date().getFullYear();
+  // Set current year
+  document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-      // Initialize Three.js background
-      initThreeJS();
+  // Initialize Three.js background
+  initThreeJS();
 
-      // Setup event listeners
-      setupEventListeners();
+  // Setup event listeners
+  setupEventListeners();
 
-      // Setup scroll effects
-      setupScrollEffects();
+  // Setup scroll effects
+  setupScrollEffects();
 
-      // Setup reveal animations
-      setupRevealAnimations();
+  // Setup reveal animations
+  setupRevealAnimations();
 
-      // Setup 3D card effects
-      setup3DCardEffects();
+  // Setup 3D card effects
+  setup3DCardEffects();
 
-      // Render initial data
+  // Request notification permission
+  requestNotificationPermission();
+
+  // Set up notification checks
+  setupNotificationChecks();
+
+  // Load data from Firebase (this will wait for authentication)
+  loadTasksFromFirebase();
+  loadEventsFromFirebase();
+}
+
+    // Firebase data loading functions
+    // In index.html, update the loadTasksFromFirebase function
+function loadTasksFromFirebase() {
+  // Wait for authentication state to be determined
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      console.log("Loading tasks for user:", user.email);
+      
+      // Load from user's specific tasks node
+      const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
+      userTasksRef.on('value', (snapshot) => {
+        tasks = [];
+        snapshot.forEach((childSnapshot) => {
+          tasks.push({
+            id: childSnapshot.key,
+            ...childSnapshot.val()
+          });
+        });
+        
+        console.log("Loaded tasks:", tasks);
+        renderTasks();
+        updateStatistics();
+      }, (error) => {
+        console.error("Error loading tasks:", error);
+      });
+    } else {
+      console.log("No user authenticated, clearing tasks");
+      tasks = [];
       renderTasks();
-      renderCalendar();
       updateStatistics();
+    }
+  });
+}
 
-      // Request notification permission
-      requestNotificationPermission();
-
-      // Set up notification checks
-      setupNotificationChecks();
+    function loadEventsFromFirebase() {
+      eventsRef.on('value', (snapshot) => {
+        events = [];
+        snapshot.forEach((childSnapshot) => {
+          const eventData = childSnapshot.val();
+          events.push({
+            id: childSnapshot.key,
+            ...eventData
+          });
+        });
+        renderCalendar();
+      });
     }
 
     // Three.js Background Setup
@@ -1415,45 +1492,148 @@
     }
 
     // Section Navigation
-    function showSection(sectionName) {
-      // Hide all sections
-      document.querySelectorAll('.page-section').forEach(section => {
-        section.classList.remove('active');
-      });
+    // In index.html, modify the showSection function (around line 1483)
+function showSection(sectionName) {
+  // Hide all sections
+  document.querySelectorAll('.page-section').forEach(section => {
+    section.classList.remove('active');
+  });
 
-      // Show selected section
-      document.getElementById(sectionName).classList.add('active');
+  // Show selected section
+  document.getElementById(sectionName).classList.add('active');
 
-      // Update navigation active state
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-      });
+  // Update navigation active state
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('active');
+  });
 
-      // Find and activate current nav link
-      document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.toLowerCase() === sectionName || 
-            (sectionName === 'home' && link.textContent.toLowerCase() === 'home')) {
-          link.classList.add('active');
-        }
-      });
-
-      // Close mobile menu
-      document.getElementById('mobileNavLinks').classList.remove('active');
-
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Re-render sections that need updates
-      if (sectionName === 'tasks') {
-        renderTasks();
-        updateStatistics();
-      } else if (sectionName === 'calendar') {
-        renderCalendar();
-      }
+  // Find and activate current nav link
+  document.querySelectorAll('.nav-link').forEach(link => {
+    if (link.textContent.toLowerCase() === sectionName || 
+        (sectionName === 'home' && link.textContent.toLowerCase() === 'home')) {
+      link.classList.add('active');
     }
+  });
+
+  // Close mobile menu - FIX: Check if the element exists before accessing it
+  const mobileNavLinks = document.getElementById('mobileNavLinks');
+  if (mobileNavLinks) {
+    mobileNavLinks.classList.remove('active');
+  }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Re-render sections that need updates
+  if (sectionName === 'tasks') {
+    renderTasks();
+    updateStatistics();
+  } else if (sectionName === 'calendar') {
+    renderCalendar();
+  }
+}
 
     // Event Listeners Setup
     function setupEventListeners() {
+      // Mobile menu toggle
+      const hamburger = document.getElementById('hamburger');
+      const mobileNavLinks = document.getElementById('mobileNavLinks');
+      
+      if (hamburger && mobileNavLinks) {
+        hamburger.addEventListener('click', () => {
+          mobileNavLinks.classList.toggle('active');
+        });
+      }
+
+      // Task management
+      const taskInput = document.getElementById('taskInput');
+      const addTaskBtn = document.getElementById('addTaskBtn');
+      const speakBtn = document.getElementById('speakBtn');
+
+      if (addTaskBtn) {
+        addTaskBtn.addEventListener('click', () => {
+          const value = taskInput.value.trim();
+          if (value) {
+            addTask(value);
+            taskInput.value = '';
+          }
+        });
+      }
+
+      if (taskInput) {
+        taskInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const value = taskInput.value.trim();
+            if (value) {
+              addTask(value);
+              taskInput.value = '';
+            }
+          }
+        });
+      }
+
+      // Add event listeners for the Smart To-Do List section
+      const todoInput = document.getElementById('todoInput');
+      const addBtn = document.getElementById('addBtn');
+
+      if (addBtn) {
+        addBtn.addEventListener('click', () => {
+          const value = todoInput.value.trim();
+          if (value) {
+            addTask(value);
+            todoInput.value = '';
+          }
+        });
+      }
+
+      if (todoInput) {
+        todoInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const value = todoInput.value.trim();
+            if (value) {
+              addTask(value);
+              todoInput.value = '';
+            }
+          }
+        });
+      }
+
+      // Speech recognition
+      if (speakBtn) {
+        speakBtn.addEventListener('click', startSpeechRecognition);
+      }
+
+      // Event management
+      const eventTitle = document.getElementById('eventTitle');
+      const eventDateTime = document.getElementById('eventDateTime');
+      const addEventBtn = document.getElementById('addEventBtn');
+
+      if (addEventBtn) {
+        addEventBtn.addEventListener('click', () => {
+          const title = eventTitle.value.trim();
+          const dateTime = eventDateTime.value;
+          if (title && dateTime) {
+            addEvent(title, dateTime);
+            eventTitle.value = '';
+            eventDateTime.value = '';
+          }
+        });
+      }
+
+      if (eventTitle) {
+        eventTitle.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const title = eventTitle.value.trim();
+            const dateTime = eventDateTime.value;
+            if (title && dateTime) {
+              addEvent(title, dateTime);
+              eventTitle.value = '';
+              eventDateTime.value = '';
+            }
+          }
+        });
+      }
+    }
       // Mobile menu toggle
       const hamburger = document.getElementById('hamburger');
       const mobileNavLinks = document.getElementById('mobileNavLinks');
@@ -1516,7 +1696,7 @@
           }
         }
       });
-    }
+    
 
     // Speech Recognition
     function startSpeechRecognition() {
@@ -1575,112 +1755,151 @@
     }
 
     // Task Management
-    function addTask(taskText) {
-      if (!taskText.trim()) return;
+   // In index.html, update the addTask function
+function addTask(taskText) {
+  if (!taskText.trim()) return;
 
-      const task = {
-        id: Date.now(),
-        text: taskText.trim(),
-        completed: false,
-        createdAt: new Date().toISOString(),
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Default to tomorrow
-      };
+  // Check if user is logged in
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    showNotification('You need to be logged in to create tasks', 'error');
+    return; // Don't redirect, just show notification
+  }
 
-      tasks.unshift(task);
-      saveTasks();
-      renderTasks();
-      updateStatistics();
-      
-      showNotification('Task added successfully!', 'success');
-    }
+  const task = {
+    text: taskText.trim(),
+    title: taskText.trim(),
+    userId: user.uid,
+    completed: false,
+    createdAt: new Date().toISOString(),
+    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  };
 
-    function toggleTask(taskId) {
-      const task = tasks.find(t => t.id === parseInt(taskId));
-      if (task) {
-        task.completed = !task.completed;
-        task.completedAt = task.completed ? new Date().toISOString() : null;
-        saveTasks();
-        renderTasks();
-        updateStatistics();
-        
-        const message = task.completed ? 'Task completed!' : 'Task marked incomplete';
+  // Save to Firebase under this user's data
+  const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
+  const newTask = userTasksRef.push();
+  newTask.set(task).then(() => {
+    showNotification('Task added successfully!', 'success');
+  }).catch((error) => {
+    console.error('Error adding task:', error);
+    showNotification('Error adding task!', 'error');
+  });
+}
+    
+    // In index.html, update the toggleTask function
+function toggleTask(taskId) {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+  
+  const task = tasks.find(t => t.id === taskId);
+  if (task) {
+    const updatedTask = {
+      ...task,
+      completed: !task.completed,
+      completedAt: !task.completed ? new Date().toISOString() : null
+    };
+    
+    // Remove the id property before saving
+    delete updatedTask.id;
+    
+    // Update in user's tasks node
+    firebase.database().ref(`users/${user.uid}/tasks/${taskId}`).update(updatedTask)
+      .then(() => {
+        const message = updatedTask.completed ? 'Task completed!' : 'Task marked incomplete';
         showNotification(message, 'success');
-      }
-    }
-
-    function deleteTask(taskId) {
-      if (confirm('Are you sure you want to delete this task?')) {
-        tasks = tasks.filter(t => t.id !== parseInt(taskId));
-        saveTasks();
-        renderTasks();
-        updateStatistics();
-        showNotification('Task deleted successfully!', 'success');
-      }
-    }
-
-    function renderTasks() {
-      const container = document.getElementById('taskContainer');
-      container.innerHTML = '';
-
-      if (tasks.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: hsla(0, 0%, 100%, 0.6);">
-            <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-            <h3>No tasks yet</h3>
-            <p>Add some tasks to get started!</p>
-          </div>
-        `;
-        return;
-      }
-
-      tasks.forEach((task, index) => {
-        const taskElement = createTaskElement(task, index);
-        container.appendChild(taskElement);
+      })
+      .catch((error) => {
+        console.error('Error updating task:', error);
+        showNotification('Error updating task!', 'error');
       });
-    }
+  }
+}
 
-    function createTaskElement(task, index) {
-      const taskElement = document.createElement('div');
-      taskElement.className = `sticky-note ${task.completed ? 'completed' : ''} new`;
-      taskElement.innerHTML = `
-        <div class="task-actions">
-          <button class="task-action-btn-ct" onclick="toggleTask('${task.id}')" title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
-            <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
-          </button>
-          <button class="task-action-btn-dt" onclick="deleteTask('${task.id}')" title="Delete task">
-            
-          </button>
-        </div>
-        <div class="task-text">${escapeHtml(task.text)}</div>
-        <div class="task-meta">
-          <div class="task-date">${formatDate(task.createdAt)}</div>
-        </div>
-      `;
+// In index.html, update the deleteTask function
+function deleteTask(taskId) {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+  
+  if (confirm('Are you sure you want to delete this task?')) {
+    // Delete from user's tasks node
+    firebase.database().ref(`users/${user.uid}/tasks/${taskId}`).remove()
+      .then(() => {
+        showNotification('Task deleted successfully!', 'success');
+      })
+      .catch((error) => {
+        console.error('Error deleting task:', error);
+        showNotification('Error deleting task!', 'error');
+      });
+  }
+}
 
-      // Remove animation class after animation completes
-      setTimeout(() => {
-        taskElement.classList.remove('new');
-      }, 500);
+   function renderTasks() {
+  const container = document.getElementById('taskContainer');
+  container.innerHTML = '';
+  
+  // Remove login check and directly show tasks or empty state
+  
+  if (tasks.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: hsla(0, 0%, 100%, 0.6);">
+        <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <h3>No tasks yet</h3>
+        <p>Add some tasks to get started!</p>
+      </div>
+    `;
+    return;
+  }
 
-      return taskElement;
-    }
+  tasks.forEach((task, index) => {
+    const taskElement = createTaskElement(task, index);
+    container.appendChild(taskElement);
+  });
+}
+
+   function createTaskElement(task, index) {
+  const taskElement = document.createElement('div');
+  taskElement.className = `sticky-note ${task.completed ? 'completed' : ''} new`;
+  taskElement.innerHTML = `
+    <div class="task-actions">
+      <button class="task-action-btn-ct" onclick="toggleTask('${task.id}')" title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
+        <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
+      </button>
+     <button class="task-action-btn-dt" onclick="deleteTask('${task.id}')" title="Delete task">
+  <i class="fas fa-trash-alt"></i>
+</button>
+    </div>
+    <div class="task-text">${escapeHtml(task.title || task.text || '')}</div>
+    <div class="task-meta">
+      <div class="task-date">${formatDate(task.createdAt)}</div>
+    </div>
+  `;
+
+  // Remove animation class after animation completes
+  setTimeout(() => {
+    taskElement.classList.remove('new');
+  }, 500);
+
+  return taskElement;
+}
 
     // Event Management
     function addEvent(title, dateTime) {
       if (!title.trim() || !dateTime) return;
 
       const event = {
-        id: Date.now(),
         title: title.trim(),
         datetime: dateTime,
         createdAt: new Date().toISOString()
       };
 
-      events.push(event);
-      saveEvents();
-      renderCalendar();
-      
-      showNotification('Event added successfully!', 'success');
+      // Save to Firebase
+      const newEventRef = eventsRef.push();
+      newEventRef.set(event).then(() => {
+        showNotification('Event added successfully!', 'success');
+      }).catch((error) => {
+        console.error('Error adding event:', error);
+        showNotification('Error adding event!', 'error');
+      });
     }
 
     function renderCalendar() {
@@ -1788,14 +2007,6 @@
       }).length;
     }
 
-    function saveTasks() {
-      localStorage.setItem('taskmate_tasks', JSON.stringify(tasks));
-    }
-
-    function saveEvents() {
-      localStorage.setItem('taskmate_events', JSON.stringify(events));
-    }
-
     function formatDate(dateString) {
       const date = new Date(dateString);
       const now = new Date();
@@ -1889,12 +2100,41 @@
         // Notify 15 minutes before event
         if (timeDiff > 0 && timeDiff <= 15 * 60 * 1000 && !event.notified) {
           showNotification(`Reminder: ${event.title} starts in 15 minutes!`, 'info');
-          event.notified = true;
-          saveEvents();
+          
+          // Update Firebase to mark as notified
+          eventsRef.child(event.id).update({ notified: true }).catch((error) => {
+            console.error('Error updating event notification status:', error);
+          });
         }
       });
     }
+    // Add event listeners for the Smart To-Do List section
+    const todoInput = document.getElementById('todoInput');
+    const addBtn = document.getElementById('addBtn');
 
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+      const value = todoInput.value.trim();
+      if (value) {
+        addTask(value);
+        todoInput.value = '';
+        updateStatistics();
+      }
+      });
+    }
+
+    if (todoInput) {
+      todoInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const value = todoInput.value.trim();
+        if (value) {
+        addTask(value);
+        todoInput.value = '';
+        updateStatistics();
+        }
+      }
+      });
+    }
     // Scroll Effects
     function setupScrollEffects() {
       const navbar = document.getElementById('navbar');
@@ -1908,7 +2148,8 @@
         // Navbar background
         if (window.scrollY > 100) {
           navbar.classList.add('scrolled');
-        } else {
+        } else { 
+      
           navbar.classList.remove('scrolled');
         }
       });
@@ -1919,7 +2160,7 @@
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting) {
+            if (
               entry.target.style.opacity = '1';
               entry.target.style.transform = 'translateY(0)';
             }

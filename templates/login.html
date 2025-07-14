@@ -47,7 +47,25 @@
   </div>
 
   <!-- Firebase + Logic -->
-   <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="{{ url_for('static', filename='store.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
+  
+  <!-- Switch Form Function -->
+  <script>
+    function switchAuthForm(formType) {
+      if (formType === 'login') {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('signupForm').style.display = 'none';
+      } else {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('signupForm').style.display = 'block';
+      }
+    }
+  </script>
+  
   <!-- 3D Background -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
