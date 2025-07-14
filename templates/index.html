@@ -2160,10 +2160,8 @@ function deleteTask(taskId) {
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (
-              entry.target.style.opacity = '1';
-              entry.target.style.transform = 'translateY(0)';
-            }
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
           });
         },
         { threshold: 0.1 }
