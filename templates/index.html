@@ -1,5 +1,4 @@
 
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -53,8 +52,7 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: "Poppins", sans-serif;
-    }
+      font-family: "Poppins", sans-serif;}
 
     body {
       background: var(--clr-bg);
@@ -1293,11 +1291,25 @@
     };
     
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig); 
-    const database = firebase.database();
-    const tasksRef = database.ref('tasks');
-    const eventsRef = database.ref('events');
-    
+    // Initialize Firebase
+// Initialize Firebase only if not already initialized
+if (!firebase.apps || !firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+} else {
+  firebase.app();
+}
+const database = firebase.database();
+
+// Create user-specific references instead of global ones
+function getUserTasksRef() {
+  const user = firebase.auth().currentUser;
+  return user ? database.ref('users/' + user.uid + '/tasks') : null;
+}
+
+function getUserEventsRef() {
+  const user = firebase.auth().currentUser;
+  return user ? database.ref('users/' + user.uid + '/events') : null;
+}
     // Global variables
     let particleSystem = null;
     let animationId = null;
@@ -1319,7 +1331,8 @@
     function goToChat() {
       window.location.href = "/c";  // Redirect to chatbot page
     }
-   function initializeApp() {
+    // Update your initialization function
+function initializeApp() {
   // Hide loading screen after a delay
   setTimeout(() => {
     document.getElementById('loadingOverlay').classList.add('hidden');
@@ -1349,58 +1362,150 @@
   // Set up notification checks
   setupNotificationChecks();
 
-  // Load data from Firebase (this will wait for authentication)
-  loadTasksFromFirebase();
-  loadEventsFromFirebase();
-}
-
-    // Firebase data loading functions
-    // In index.html, update the loadTasksFromFirebase function
-function loadTasksFromFirebase() {
-  // Wait for authentication state to be determined
-  firebase.auth().onAuthStateChanged((user) => {
+  // Check authentication state first, then load data
+  firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
-      console.log("Loading tasks for user:", user.email);
-      
-      // Load from user's specific tasks node
-      const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
-      userTasksRef.on('value', (snapshot) => {
-        tasks = [];
-        snapshot.forEach((childSnapshot) => {
-          tasks.push({
-            id: childSnapshot.key,
-            ...childSnapshot.val()
-          });
-        });
-        
-        console.log("Loaded tasks:", tasks);
-        renderTasks();
-        updateStatistics();
-      }, (error) => {
-        console.error("Error loading tasks:", error);
-      });
-    } else {
-      console.log("No user authenticated, clearing tasks");
-      tasks = [];
-      renderTasks();
+      console.log("User is authenticated:", user.email);
+      loadTasksFromFirebase();
+      loadEventsFromFirebase();
       updateStatistics();
+    } else {
+      console.log("No user is authenticated");
+      // Handle unauthenticated state
     }
   });
 }
+   
+function addTask(taskText) {
+  // Validate input
+  if (!taskText || !taskText.trim()) {
+    console.log("Empty task text, not adding task");
+    return;
+  }
 
+  // Check authentication
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.log("No authenticated user found");
+    showNotification('You need to be logged in to add tasks', 'error');
+    return;
+  }
+
+  console.log("Creating task for user:", user.uid);
+  
+  // Create task object with all necessary fields
+  const task = {
+    text: taskText.trim(),
+    title: taskText.trim(),
+    userId: user.uid,
+    completed: false,
+    createdAt: new Date().toISOString(),
+    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  };
+
+  // Get reference to user's tasks collection
+  const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
+  
+  // Push new task
+  userTasksRef.push().set(task)
+    .then(() => {
+      console.log("Task added successfully:", task);
+      showNotification('Task added successfully!', 'success');
+      
+      // Force refresh tasks from Firebase
+      loadTasksFromFirebase();
+      
+      // Update statistics explicitly
+      updateStatistics();
+    })
+    .catch((error) => {
+      console.error("Error adding task:", error);
+      showNotification('Error adding task: ' + error.message, 'error');
+    });
+  }
     function loadEventsFromFirebase() {
-      eventsRef.on('value', (snapshot) => {
-        events = [];
-        snapshot.forEach((childSnapshot) => {
-          const eventData = childSnapshot.val();
-          events.push({
-            id: childSnapshot.key,
-            ...eventData
-          });
-        });
-        renderCalendar();
+  // Get current user
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.log("No authenticated user found");
+    events = []; // Clear events array
+    renderCalendar();
+    return;
+  }
+  
+  const userEventsRef = firebase.database().ref('users/' + user.uid + '/events');
+  userEventsRef.on('value', (snapshot) => {
+    events = [];
+    snapshot.forEach((childSnapshot) => {
+      const eventData = childSnapshot.val();
+      events.push({
+        id: childSnapshot.key,
+        ...eventData
       });
-    }
+    });
+    renderCalendar();
+  });
+}
+
+// Add this before updateStatistics
+function getTodayTasksCount() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  return tasks.filter(task => {
+    const taskDate = new Date(task.createdAt);
+    taskDate.setHours(0, 0, 0, 0);
+    return taskDate.getTime() === today.getTime();
+  }).length;
+}
+function loadTasksFromFirebase() {
+  console.log("Loading tasks from Firebase");
+  
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.log("No authenticated user found");
+    tasks = []; // Clear tasks array
+    renderTasks();
+    updateStatistics();
+    return;
+  }
+  
+  console.log("Loading tasks for user:", user.uid);
+  const userEventsRef = database.ref('users/' + user.uid + '/events');
+userEventsRef.on('value', (snapshot) => {
+  events = [];
+  snapshot.forEach((childSnapshot) => {
+    const eventData = childSnapshot.val();
+    events.push({
+      id: childSnapshot.key,
+      ...eventData
+    });
+  });
+  renderCalendar();
+});
+  const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
+  userTasksRef.on('value', (snapshot) => {
+    console.log("Tasks snapshot received");
+    tasks = [];
+    
+    snapshot.forEach((childSnapshot) => {
+      const taskData = childSnapshot.val();
+      tasks.push({
+        id: childSnapshot.key,
+        ...taskData
+      });
+    });
+    
+    console.log("Loaded tasks:", tasks.length);
+    renderTasks();
+    updateStatistics();
+  }, (error) => {
+    console.error("Error loading tasks:", error);
+    showNotification('Error loading tasks: ' + error.message, 'error');
+  });
+}
+    // Firebase data loading functions
+    // In index.html, update the loadTasksFromFirebase function
 
     // Three.js Background Setup
     function initThreeJS() {
@@ -1532,7 +1637,24 @@ function showSection(sectionName) {
     renderCalendar();
   }
 }
-
+// Add this before initializeApp
+function setup3DCardEffects() {
+  const cards = document.querySelectorAll('[data-tilt]');
+  cards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const cardRect = card.getBoundingClientRect();
+      const cardCenterX = cardRect.left + cardRect.width / 2;
+      const cardCenterY = cardRect.top + cardRect.height / 2;
+      const angleY = -(e.clientX - cardCenterX) * 0.05;
+      const angleX = (e.clientY - cardCenterY) * 0.05;
+      card.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg)`;
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+    });
+  });
+}
     // Event Listeners Setup
     function setupEventListeners() {
       // Mobile menu toggle
@@ -1544,42 +1666,12 @@ function showSection(sectionName) {
           mobileNavLinks.classList.toggle('active');
         });
       }
-  // In index.html, update the addTask function
 
       // Task management
       const taskInput = document.getElementById('taskInput');
       const addTaskBtn = document.getElementById('addTaskBtn');
       const speakBtn = document.getElementById('speakBtn');
-// Fix the syntax error in the addTask function in index.html
-function addTask(taskText) {
-  if (!taskText.trim()) return;
 
-  // Check if user is logged in
-  const user = firebase.auth().currentUser;
-  if (!user) {
-    showNotification('You need to be logged in to create tasks', 'error');
-    return; // Don't redirect, just show notification
-  } // <-- This closing bracket was missing
-
-  const task = {
-    text: taskText.trim(),
-    title: taskText.trim(),
-    userId: user.uid,
-    completed: false,
-    createdAt: new Date().toISOString(),
-    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  };
-
-  // Save to Firebase under this user's data
-  const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
-  const newTask = userTasksRef.push();
-  newTask.set(task).then(() => {
-    showNotification('Task added successfully!', 'success');
-  }).catch((error) => {
-    console.error('Error adding task:', error);
-    showNotification('Error adding task!', 'error');
-  });
-}
       if (addTaskBtn) {
         addTaskBtn.addEventListener('click', () => {
           const value = taskInput.value.trim();
@@ -1664,68 +1756,6 @@ function addTask(taskText) {
         });
       }
     }
-      // Mobile menu toggle
-      const hamburger = document.getElementById('hamburger');
-      const mobileNavLinks = document.getElementById('mobileNavLinks');
-      
-      hamburger.addEventListener('click', () => {
-        mobileNavLinks.classList.toggle('active');
-      });
-    function goToChat() {
-      window.location.href = "/c";  // Redirect to chatbot page
-    }
-      // Task management
-      const taskInput = document.getElementById('taskInput');
-      const addTaskBtn = document.getElementById('addTaskBtn');
-      const speakBtn = document.getElementById('speakBtn');
-
-      addTaskBtn.addEventListener('click', () => {
-        const value = taskInput.value.trim();
-        if (value) {
-          addTask(value);
-          taskInput.value = '';
-        }
-      });
-
-      taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const value = taskInput.value.trim();
-          if (value) {
-            addTask(value);
-            taskInput.value = '';
-          }
-        }
-      });
-
-      // Speech recognition
-      speakBtn.addEventListener('click', startSpeechRecognition);
-
-      // Event management
-      const eventTitle = document.getElementById('eventTitle');
-      const eventDateTime = document.getElementById('eventDateTime');
-      const addEventBtn = document.getElementById('addEventBtn');
-
-      addEventBtn.addEventListener('click', () => {
-        const title = eventTitle.value.trim();
-        const dateTime = eventDateTime.value;
-        if (title && dateTime) {
-          addEvent(title, dateTime);
-          eventTitle.value = '';
-          eventDateTime.value = '';
-        }
-      });
-
-      eventTitle.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const title = eventTitle.value.trim();
-          const dateTime = eventDateTime.value;
-          if (title && dateTime) {
-            addEvent(title, dateTime);
-            eventTitle.value = '';
-            eventDateTime.value = '';
-          }
-        }
-      });
     
 
     // Speech Recognition
@@ -1784,17 +1814,42 @@ function addTask(taskText) {
       }, 5000);
     }
 
-// Task Management
+    // Task Management
    // In index.html, update the addTask function
-function addTask(taskText) {
-  if (!taskText.trim()) return;
-
-  // Check if user is logged in
+function addEvent(title, dateTime) {
+  if (!title.trim() || !dateTime) return;
+  
   const user = firebase.auth().currentUser;
   if (!user) {
-    showNotification('You need to be logged in to create tasks', 'error');
-    return; // Don't redirect, just show notification
-  } // <-- FIXED: Added missing closing curly brace here
+    showNotification('You need to be logged in to create events', 'error');
+    return;
+  }
+
+  const event = {
+    title: title.trim(),
+    datetime: dateTime,
+    userId: user.uid,
+    createdAt: new Date().toISOString()
+  };
+
+  // Save to Firebase under user's events
+  const userEventsRef = database.ref('users/' + user.uid + '/events');
+  const newEventRef = userEventsRef.push();
+  newEventRef.set(event).then(() => {
+    showNotification('Event added successfully!', 'success');
+  }).catch((error) => {
+    console.error('Error adding event:', error);
+    showNotification('Error adding event!', 'error');
+  });
+}
+// Add Task function (fixes missing function declaration)
+function addTask(taskText) {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    showNotification('You need to be logged in to add tasks', 'error');
+    return;
+  }
+  if (!taskText.trim()) return;
 
   const task = {
     text: taskText.trim(),
@@ -1911,43 +1966,9 @@ function deleteTask(taskId) {
 
   return taskElement;
 }
-// Add this to your index.html script section
-function ensureAuthenticated(callback) {
-  // Wait a moment to make sure auth state has resolved
-  setTimeout(() => {
-    const user = firebase.auth().currentUser;
-    console.log("Current auth user:", user ? user.email : "Not logged in");
-    
-    if (user) {
-      // User is logged in, proceed with callback
-      if (typeof callback === 'function') {
-        callback(user);
-      }
-    } else {
-      // No user logged in
-      showNotification("You need to be logged in to perform this action", "error");
-    }
-  }, 300);
-}
+
     // Event Management
-    function addEvent(title, dateTime) {
-      if (!title.trim() || !dateTime) return;
-
-      const event = {
-        title: title.trim(),
-        datetime: dateTime,
-        createdAt: new Date().toISOString()
-      };
-
-      // Save to Firebase
-      const newEventRef = eventsRef.push();
-      newEventRef.set(event).then(() => {
-        showNotification('Event added successfully!', 'success');
-      }).catch((error) => {
-        console.error('Error adding event:', error);
-        showNotification('Error adding event!', 'error');
-      });
-    }
+    // (Removed duplicate addEvent function to fix syntax error)
 
     function renderCalendar() {
       const calendarGrid = document.getElementById('calendarGrid');
@@ -2035,25 +2056,77 @@ function ensureAuthenticated(callback) {
     }
 
     // Utility Functions
-    function updateStatistics() {
-      const totalTasks = tasks.length;
-      const completedTasks = tasks.filter(t => t.completed).length;
-      const todayTasks = getTodayTasksCount();
+  // Updated updateStatistics function for index.html
+function updateStatistics() {
+  console.log("Updating statistics");
+  
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.log("No authenticated user found");
+    return;
+  }
+  
+  const totalElement = document.getElementById('totalTasks');
+  const completedElement = document.getElementById('completedTasks');
+  const todayElement = document.getElementById('todayTasks');
+  
+  // Use the statistics from store.js if available
+  if (window.taskStats) {
+    if (totalElement) totalElement.textContent = window.taskStats.total;
+    if (completedElement) completedElement.textContent = window.taskStats.completed;
+    if (todayElement) todayElement.textContent = window.taskStats.today;
+    return;
+  }
+  
+  // If stats aren't available, fetch them directly
+  const stats = {
+    total: 0,
+    completed: 0,
+    today: 0
+  };
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
+  userTasksRef.once('value')
+    .then((snapshot) => {
+      snapshot.forEach((childSnapshot) => {
+        stats.total++;
+        if (childSnapshot.val().completed) {
+          stats.completed++;
+        }
+        
+        const taskDate = new Date(childSnapshot.val().createdAt);
+        taskDate.setHours(0, 0, 0, 0);
+        if (taskDate.getTime() === today.getTime()) {
+          stats.today++;
+        }
+      });
+      
+      // Update the UI
+      if (totalElement) totalElement.textContent = stats.total;
+      if (completedElement) completedElement.textContent = stats.completed;
+      if (todayElement) todayElement.textContent = stats.today;
+    })
+    .catch((error) => {
+      console.error("Error updating statistics:", error);
+    });
+}
 
-      document.getElementById('totalTasks').textContent = totalTasks;
-      document.getElementById('completedTasks').textContent = completedTasks;
-      document.getElementById('todayTasks').textContent = todayTasks;
-    }
-
-    function getTodayTasksCount() {
-      const today = new Date();
-      const todayStr = today.toDateString();
-      return tasks.filter(task => {
-        const taskDate = new Date(task.createdAt);
-        return taskDate.toDateString() === todayStr && !task.completed;
-      }).length;
-    }
-
+// Add event listener for task statistics updates
+document.addEventListener('taskStatsUpdated', function(e) {
+  const stats = e.detail;
+  console.log("Task statistics updated:", stats);
+  
+  const totalElement = document.getElementById('totalTasks');
+  const completedElement = document.getElementById('completedTasks');
+  const todayElement = document.getElementById('todayTasks');
+  
+  if (totalElement) totalElement.textContent = stats.total;
+  if (completedElement) completedElement.textContent = stats.completed;
+  if (todayElement) todayElement.textContent = stats.today;
+});
     function formatDate(dateString) {
       const date = new Date(dateString);
       const now = new Date();
@@ -2137,24 +2210,28 @@ function ensureAuthenticated(callback) {
       }, 60000);
     }
 
-    function checkUpcomingEvents() {
-      const now = new Date();
+   function checkUpcomingEvents() {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+  
+  const now = new Date();
+  
+  events.forEach(event => {
+    const eventTime = new Date(event.datetime);
+    const timeDiff = eventTime.getTime() - now.getTime();
+    
+    // Notify 15 minutes before event
+    if (timeDiff > 0 && timeDiff <= 15 * 60 * 1000 && !event.notified) {
+      showNotification(`Reminder: ${event.title} starts in 15 minutes!`, 'info');
       
-      events.forEach(event => {
-        const eventTime = new Date(event.datetime);
-        const timeDiff = eventTime.getTime() - now.getTime();
-        
-        // Notify 15 minutes before event
-        if (timeDiff > 0 && timeDiff <= 15 * 60 * 1000 && !event.notified) {
-          showNotification(`Reminder: ${event.title} starts in 15 minutes!`, 'info');
-          
-          // Update Firebase to mark as notified
-          eventsRef.child(event.id).update({ notified: true }).catch((error) => {
-            console.error('Error updating event notification status:', error);
-          });
-        }
+      // Update Firebase to mark as notified
+      const userEventsRef = database.ref('users/' + user.uid + '/events');
+      userEventsRef.child(event.id).update({ notified: true }).catch((error) => {
+        console.error('Error updating event notification status:', error);
       });
     }
+  });
+}
     // Add event listeners for the Smart To-Do List section
     const todoInput = document.getElementById('todoInput');
     const addBtn = document.getElementById('addBtn');
@@ -2207,39 +2284,20 @@ function ensureAuthenticated(callback) {
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = '1';
+              entry.target.style.transform = 'translateY(0)';
+            }
           });
         },
         { threshold: 0.1 }
       );
 
       const sections = document.querySelectorAll('.features-section, .page-container');
-      sections.forEach((section) => observer.observe(section));
-    }
-
-    // 3D Card Effects
-    function setup3DCardEffects() {
-      const cards = document.querySelectorAll('[data-tilt]');
-      
-      cards.forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-          const rect = card.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-          
-          const rotateX = (y - centerY) / 10;
-          const rotateY = (centerX - x) / 10;
-          
-          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
-        });
-        
-        card.addEventListener('mouseleave', () => {
-          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-        });
+      sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(40px)';
+        observer.observe(section);
       });
     }
 
@@ -2249,7 +2307,7 @@ function ensureAuthenticated(callback) {
         cancelAnimationFrame(animationId);
       }
     });
-    
+  
   </script>
 </body>
 </html>
