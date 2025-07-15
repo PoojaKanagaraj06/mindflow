@@ -16,8 +16,6 @@ if (!firebase.apps || !firebase.apps.length) {
     // Use the existing initialized Firebase instance
     firebase.app();
 }
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
 
 // Create database reference
 const database = firebase.database();
@@ -52,7 +50,14 @@ function saveUser(name, email, password) {
             alert("Error creating account: " + error.message);
         });
 }
-
+// Add this to better debug Firebase access issues
+firebase.database().ref('.info/connected').on('value', function(snap) {
+  if (snap.val() === true) {
+    console.log('Connected to Firebase');
+  } else {
+    console.log('Not connected to Firebase');
+  }
+});
 // Login user function with Firebase Authentication
 // Modify the loginUser function in store.js
 function loginUser(email, password) {
@@ -128,34 +133,78 @@ function googleSignIn() {
             alert("Google sign-in failed: " + error.message);
         });
 }
-// Function to fetch and display task statistics
-function fetchAndDisplayTaskStats(uid) {
-const stats = {
+
+// Improved function to fetch and display task statistics
+function fetchAndDisplayTaskStats() {
+  // Get the current user
+  const user = auth.currentUser;
+  if (!user) {
+    console.log("No authenticated user to fetch stats for");
+    return;
+  }
+  
+  console.log("Fetching task statistics for user:", user.uid);
+  
+  const stats = {
     total: 0,
     completed: 0,
-    pending: 0
-};
-const tasksRef = database.ref('users/' + uid + '/tasks');
-tasksRef.once('value')
+    pending: 0,
+    today: 0
+  };
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const tasksRef = database.ref('users/' + user.uid + '/tasks');
+  tasksRef.once('value')
     .then((snapshot) => {
-        snapshot.forEach((child) => {
-            stats.total++;
-            if (child.val().completed) {
-                stats.completed++;
-            } else {
-                stats.pending++;
-            }
-        });
-        // Display stats in dashboard (dex.html)
-        // Make sure you have elements with these IDs in your HTML
-        document.getElementById('totalTasks').textContent = stats.total;
-        document.getElementById('completedTasks').textContent = stats.completed;
-        document.getElementById('pendingTasks').textContent = stats.pending;
+      snapshot.forEach((child) => {
+        // Count total tasks
+        stats.total++;
+        
+        // Count completed tasks
+        if (child.val().completed) {
+          stats.completed++;
+        } else {
+          stats.pending++;
+        }
+        
+        // Count today's tasks
+        const taskDate = new Date(child.val().createdAt);
+        taskDate.setHours(0, 0, 0, 0);
+        if (taskDate.getTime() === today.getTime()) {
+          stats.today++;
+        }
+      });
+      
+      console.log("Task statistics:", stats);
+      
+      // Check if we're in the dashboard or main page
+      const totalTasksElement = document.getElementById('totalTasks');
+      const completedTasksElement = document.getElementById('completedTasks');
+      const pendingTasksElement = document.getElementById('pendingTasks');
+      const todayTasksElement = document.getElementById('todayTasks');
+      
+      // Update UI if elements exist
+      if (totalTasksElement) totalTasksElement.textContent = stats.total;
+      if (completedTasksElement) completedTasksElement.textContent = stats.completed;
+      if (pendingTasksElement) pendingTasksElement.textContent = stats.pending;
+      if (todayTasksElement) todayTasksElement.textContent = stats.today;
+      
+      // Make stats available to any page that needs them
+      window.taskStats = stats;
+      
+      // Call custom event to notify any page that stats are updated
+      const event = new CustomEvent('taskStatsUpdated', { detail: stats });
+      document.dispatchEvent(event);
     })
     .catch((error) => {
-        console.error("Error fetching task stats:", error);
+      console.error("Error fetching task stats:", error);
     });
 }
+
+// Export the function to make it globally available
+window.fetchAndDisplayTaskStats = fetchAndDisplayTaskStats;
 // Add event listener for the signup form
 document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signupForm');
@@ -202,6 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Save task function - now it associates tasks with the current user
 // Save task function - now it associates tasks with the current user
+// Improved saveTask function
 function saveTask(title, description) {
     const user = auth.currentUser;
     if (!user) {
@@ -222,6 +272,8 @@ function saveTask(title, description) {
     })
     .then(() => {
         console.log("Task saved successfully");
+        // Update statistics after adding task
+        fetchAndDisplayTaskStats();
     })
     .catch((error) => {
         console.error("Error saving task:", error);
@@ -229,6 +281,7 @@ function saveTask(title, description) {
     });
 }
 
+// Improved deleteTask function
 function deleteTask(taskId) {
     const user = auth.currentUser;
     if (!user) {
@@ -240,6 +293,8 @@ function deleteTask(taskId) {
     taskRef.remove()
     .then(() => {
         console.log("Task deleted successfully");
+        // Update statistics after deleting task
+        fetchAndDisplayTaskStats();
     })
     .catch((error) => {
         console.error("Error deleting task:", error);
@@ -247,6 +302,38 @@ function deleteTask(taskId) {
     });
 }
 
+// Add a toggleTask function
+function toggleTask(taskId) {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("You must be logged in to update tasks");
+        return;
+    }
+    
+    const taskRef = database.ref('users/' + user.uid + '/tasks/' + taskId);
+    taskRef.once('value')
+        .then((snapshot) => {
+            const task = snapshot.val();
+            if (task) {
+                return taskRef.update({
+                    completed: !task.completed,
+                    completedAt: !task.completed ? new Date().toISOString() : null
+                });
+            }
+        })
+        .then(() => {
+            console.log("Task status toggled successfully");
+            // Update statistics after toggling task
+            fetchAndDisplayTaskStats();
+        })
+        .catch((error) => {
+            console.error("Error toggling task status:", error);
+            alert("Error updating task: " + error.message);
+        });
+}
+
+// Make function available globally
+window.toggleTask = toggleTask;
 const getElementVal = (id) => {
     return document.getElementById(id).value;
 }
@@ -255,14 +342,18 @@ const getElementVal = (id) => {
 // In store.js, update the auth state listener
 // In store.js, update the auth state listener
 // Check authentication state
+// Update auth state listener to fetch stats
 auth.onAuthStateChanged((user) => {
   if (user) {
     // User is signed in
     console.log("User is signed in:", user.email);
     
+    // Fetch task statistics
+    fetchAndDisplayTaskStats();
+    
     // Load tasks when user is authenticated
     const currentPath = window.location.pathname;
-    if (currentPath === '/' || currentPath.includes('dashboard')) {
+    if (currentPath === '/' || currentPath.includes('dashboard') || currentPath.includes('index')) {
       // Call the loadTasksFromFirebase function if it exists
       if (typeof window.loadTasksFromFirebase === 'function') {
         window.loadTasksFromFirebase();
