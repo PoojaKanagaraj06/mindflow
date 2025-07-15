@@ -1544,12 +1544,42 @@ function showSection(sectionName) {
           mobileNavLinks.classList.toggle('active');
         });
       }
+  // In index.html, update the addTask function
 
       // Task management
       const taskInput = document.getElementById('taskInput');
       const addTaskBtn = document.getElementById('addTaskBtn');
       const speakBtn = document.getElementById('speakBtn');
+// Fix the syntax error in the addTask function in index.html
+function addTask(taskText) {
+  if (!taskText.trim()) return;
 
+  // Check if user is logged in
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    showNotification('You need to be logged in to create tasks', 'error');
+    return; // Don't redirect, just show notification
+  } // <-- This closing bracket was missing
+
+  const task = {
+    text: taskText.trim(),
+    title: taskText.trim(),
+    userId: user.uid,
+    completed: false,
+    createdAt: new Date().toISOString(),
+    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  };
+
+  // Save to Firebase under this user's data
+  const userTasksRef = firebase.database().ref('users/' + user.uid + '/tasks');
+  const newTask = userTasksRef.push();
+  newTask.set(task).then(() => {
+    showNotification('Task added successfully!', 'success');
+  }).catch((error) => {
+    console.error('Error adding task:', error);
+    showNotification('Error adding task!', 'error');
+  });
+}
       if (addTaskBtn) {
         addTaskBtn.addEventListener('click', () => {
           const value = taskInput.value.trim();
@@ -1754,7 +1784,7 @@ function showSection(sectionName) {
       }, 5000);
     }
 
-    // Task Management
+// Task Management
    // In index.html, update the addTask function
 function addTask(taskText) {
   if (!taskText.trim()) return;
@@ -1764,7 +1794,7 @@ function addTask(taskText) {
   if (!user) {
     showNotification('You need to be logged in to create tasks', 'error');
     return; // Don't redirect, just show notification
-  }
+  } // <-- FIXED: Added missing closing curly brace here
 
   const task = {
     text: taskText.trim(),
@@ -1881,7 +1911,24 @@ function deleteTask(taskId) {
 
   return taskElement;
 }
-
+// Add this to your index.html script section
+function ensureAuthenticated(callback) {
+  // Wait a moment to make sure auth state has resolved
+  setTimeout(() => {
+    const user = firebase.auth().currentUser;
+    console.log("Current auth user:", user ? user.email : "Not logged in");
+    
+    if (user) {
+      // User is logged in, proceed with callback
+      if (typeof callback === 'function') {
+        callback(user);
+      }
+    } else {
+      // No user logged in
+      showNotification("You need to be logged in to perform this action", "error");
+    }
+  }, 300);
+}
     // Event Management
     function addEvent(title, dateTime) {
       if (!title.trim() || !dateTime) return;
