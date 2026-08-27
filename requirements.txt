@@ -1,0 +1,10 @@
+Flask 
+SpeechRecognition 
+pydub
+google-generativeai
+python-dotenv
+fastapi
+uvicorn
+a2wsgi
+scikit-learn
+pandas

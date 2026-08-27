@@ -1,0 +1,4 @@
+Commands to Run:
+pip install Flask SpeechRecognition pydub
+python app.py
+//
